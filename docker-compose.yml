@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    container_name: quizypal_app
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_APP=api/v1/app.py
+      - FLASK_ENV=development  # Change to 'production' for deployment
+      - REDIS_URL=redis://redis:6379/0  # Redis connection string
+    volumes:
+      - .:/app
+      - .env:/app/.env
+    depends_on:
+      - db
+      - redis  # Make sure the app waits for Redis to be ready
+    command: ["gunicorn", "--workers", "4", "--bind", "0.0.0.0:5000", "api.v1.app:app"]
+
+  db:
+    image: mysql:5.7
+    container_name: quizypal_db
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - "3306:3306"
+    volumes:
+      - quizypal_db_data:/var/lib/mysql
+
+  redis:
+    image: redis:alpine
+    container_name: quizypal_redis
+    ports:
+      - "6379:6379"  # Expose Redis on port 6379
+    volumes:
+      - redis_data:/data  # Persist Redis data across restarts
+
+volumes:
+  quizypal_db_data:
+  redis_data:
