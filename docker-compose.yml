@@ -9,7 +9,8 @@ services:
     environment:
       - FLASK_APP=api/v1/app.py
       - FLASK_ENV=development  # Change to 'production' for deployment
-      - REDIS_URL=redis://redis:6379/0  # Redis connection string
+      - REDIS_URL=redis://quizypal_redis:6379/0  # Redis connection string
+      - DATABASE_URL=${DATABASE_URL}
     volumes:
       - .:/app
       - .env:/app/.env
