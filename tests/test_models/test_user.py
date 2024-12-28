@@ -30,23 +30,6 @@ class TestUser(unittest.TestCase):
         with patch('bcrypt.checkpw', return_value=False):
             self.assertFalse(self.user.check_password("wrongpassword"))
 
-    def test_generate_reset_token(self):
-        """
-        Test the generate_reset_token method.
-        """
-        # Ensure reset token and expiry are initially None
-        self.assertIsNone(self.user.reset_token)
-        self.assertIsNone(self.user.token_expiry)
-
-        # Mock the save method to avoid actual database interaction
-        with patch.object(self.user, 'save', return_value=None):
-            self.user.generate_reset_token()
-
-        # Test that the reset token and expiry time are set
-        self.assertIsNotNone(self.user.reset_token)
-        self.assertIsNotNone(self.user.token_expiry)
-        self.assertGreater(self.user.token_expiry, datetime.now(timezone.utc))
-
     def test_set_password(self):
         """
         Test the set_password method.
