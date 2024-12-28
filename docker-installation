@@ -119,5 +119,10 @@ docker exec -it quizypal_redis redis-cli
 # Monitor the logs for any errors or issues:
 docker logs quizypal_app
 
+# Enter the Application Container
+# Access the running container where your application and its
+# dependencies are installed:
+docker exec -it quizypal_app bash
+
 
 
