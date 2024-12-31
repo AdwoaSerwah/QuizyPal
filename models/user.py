@@ -7,10 +7,19 @@ validation. It interacts with the database via SQLAlchemy for data persistence.
 
 import models
 from models.base_model import BaseModel, Base
-from sqlalchemy import Column, String, Boolean  # Include Boolean
+from sqlalchemy import Column, String, Enum  # Import Enum
 from sqlalchemy.orm import relationship
 from bcrypt import gensalt, hashpw, checkpw
 from typing import Optional
+import enum
+
+
+class Role(enum.Enum):
+    """
+    Enum for User roles. It defines the possible roles in the system.
+    """
+    USER = "user"
+    ADMIN = "admin"
 
 
 class User(BaseModel, Base):
@@ -24,7 +33,7 @@ class User(BaseModel, Base):
         username (str): The user's unique username (max length 10).
         email (str): The user's unique email address.
         password (str): The user's encrypted password.
-        is_admin (bool): Indicates if the user is an admin.
+        role (str): The user's role, defined using the Role Enum.
     """
 
     __tablename__ = 'users'
@@ -34,7 +43,13 @@ class User(BaseModel, Base):
     username: str = Column(String(128), unique=True, nullable=False, index=True)
     email: str = Column(String(128), unique=True, nullable=False, index=True)
     password: str = Column(String(128), nullable=False)
-    is_admin: bool = Column(Boolean, default=False, nullable=False)
+    # role: str = Column(Enum(Role), default=Role.USER, nullable=False, index=True)
+    role: str = Column(Enum(Role), default=Role.USER, nullable=False, index=True)
+
+    # One-to-many relationships with cascade delete
+    results = relationship('Result', back_populates='user', cascade="all, delete-orphan")
+    user_answers = relationship('UserAnswer', back_populates='user', cascade="all, delete-orphan")
+    password_reset_tokens = relationship('PasswordResetToken', back_populates='user', cascade="all, delete-orphan")
 
     def __init__(self, *args: tuple, **kwargs: dict) -> None:
         """

@@ -11,6 +11,7 @@ from flask_migrate import Migrate
 from os import getenv
 from dotenv import load_dotenv
 from typing import Optional
+from models.base_model import Base
 
 # Load environment variables from a .env file
 load_dotenv()
@@ -24,8 +25,10 @@ app.config['SQLALCHEMY_DATABASE_URI'] = getenv("DATABASE_URL")
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False  # Suppress the warning
 app.config['SECRET_KEY'] = getenv('SECRET_KEY')
 
-# Initialize SQLAlchemy and Flask-Migrate
+# Initialize SQLAlchemy object
 db = SQLAlchemy(app)
+
+# Initialize Flask-Migrate with app and Base (Base contains the models' metadata)
 migrate = Migrate(app, db)
 
 # Register the blueprint for API routes
