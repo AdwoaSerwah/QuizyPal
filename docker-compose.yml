@@ -11,13 +11,15 @@ services:
       - FLASK_ENV=development  # Change to 'production' for deployment
       - REDIS_URL=redis://quizypal_redis:6379/0  # Redis connection string
       - DATABASE_URL=${DATABASE_URL}
+      - PYTHONPATH=/app
     volumes:
       - .:/app
       - .env:/app/.env
     depends_on:
       - db
       - redis  # Make sure the app waits for Redis to be ready
-    command: ["gunicorn", "--workers", "4", "--bind", "0.0.0.0:5000", "api.v1.app:app"]
+      - celery  # Wait for the Celery worker to be ready
+    command: ["gunicorn", "--workers", "2", "--bind", "0.0.0.0:5000", "api.v1.app:app"]
 
   db:
     image: mysql:5.7
@@ -41,7 +43,18 @@ services:
     volumes:
       - redis_data:/data  # Persist Redis data across restarts
 
+  celery:
+    build: .
+    container_name: quizypal_celery
+    depends_on:
+      - redis  # Wait for Redis to be ready
+    environment:
+      - FLASK_APP=api/v1/app.py
+      - FLASK_ENV=development  # Change to 'production' for deployment
+      - REDIS_URL=redis://quizypal_redis:6379/0  # Redis connection string
+      - DATABASE_URL=${DATABASE_URL}
+    command: celery -A api.v1.app.celery worker --loglevel=info
+
 volumes:
   quizypal_db_data:
   redis_data:
-

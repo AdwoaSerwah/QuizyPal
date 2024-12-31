@@ -2,8 +2,10 @@
 """
 Contains the class DBStorage for interacting with the MySQL database.
 """
-
-import models
+from os import getenv
+from sqlalchemy import create_engine
+from sqlalchemy.orm import scoped_session, sessionmaker
+from typing import Optional, Dict, Type, Any
 from models.base_model import Base
 from models.user import User
 from models.password_reset_token import PasswordResetToken
@@ -13,10 +15,7 @@ from models.question import Question
 from models.choice import Choice
 from models.user_answer import UserAnswer
 from models.result import Result
-from os import getenv
-from sqlalchemy import create_engine
-from sqlalchemy.orm import scoped_session, sessionmaker
-from typing import Optional, Dict, Type, Any
+import models
 
 classes = {"User": User,
            "PasswordResetToken": PasswordResetToken,
