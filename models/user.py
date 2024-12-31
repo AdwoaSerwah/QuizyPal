@@ -5,14 +5,12 @@ This class includes methods for password encryption and password
 validation. It interacts with the database via SQLAlchemy for data persistence.
 """
 
-import models
 from models.base_model import BaseModel, Base
 from sqlalchemy import Column, String, Enum  # Import Enum
 from sqlalchemy.orm import relationship
 from bcrypt import gensalt, hashpw, checkpw
 from typing import Optional
 import enum
-
 
 class Role(enum.Enum):
     """
