@@ -6,11 +6,14 @@ validation. It interacts with the database via SQLAlchemy for data persistence.
 """
 
 from models.base_model import BaseModel, Base
-from sqlalchemy import Column, String, Enum  # Import Enum
+from sqlalchemy import Column, String, Enum, DateTime  # Import Enum
 from sqlalchemy.orm import relationship
 from bcrypt import gensalt, hashpw, checkpw
+from datetime import datetime, timezone, timedelta
+import secrets
 from typing import Optional
 import enum
+
 
 class Role(enum.Enum):
     """
@@ -41,13 +44,13 @@ class User(BaseModel, Base):
     username: str = Column(String(128), unique=True, nullable=False, index=True)
     email: str = Column(String(128), unique=True, nullable=False, index=True)
     password: str = Column(String(128), nullable=False)
-    # role: str = Column(Enum(Role), default=Role.USER, nullable=False, index=True)
-    role: str = Column(Enum(Role), default=Role.USER, nullable=False, index=True)
+    role: Role = Column(Enum(Role), default=Role.USER, nullable=False, index=True)
+    password_reset_token: Optional[str] = Column(String(128), unique=True, nullable=True)
+    token_expires_at: Optional[datetime] = Column(DateTime, nullable=True, default=lambda: datetime.now(timezone.utc))
 
     # One-to-many relationships with cascade delete
-    results = relationship('Result', back_populates='user', cascade="all, delete-orphan")
-    user_answers = relationship('UserAnswer', back_populates='user', cascade="all, delete-orphan")
-    password_reset_tokens = relationship('PasswordResetToken', back_populates='user', cascade="all, delete-orphan")
+    results: list = relationship('Result', back_populates='user', cascade="all, delete-orphan")
+    user_answers: list = relationship('UserAnswer', back_populates='user', cascade="all, delete-orphan")
 
     def __init__(self, *args: tuple, **kwargs: dict) -> None:
         """
@@ -85,8 +88,7 @@ class User(BaseModel, Base):
                   False otherwise.
         """
         if self.password:
-            return checkpw(password.encode('utf-8'),
-                           self.password.encode('utf-8'))
+            return checkpw(password.encode('utf-8'), self.password.encode('utf-8'))
         return False
 
     def set_password(self, raw_password: str) -> None:
@@ -100,3 +102,13 @@ class User(BaseModel, Base):
         """
         self.password = raw_password  # Set the new password
         self.save()  # Save the user with the updated password
+
+    def generate_reset_token(self) -> None:
+        """
+        Generates a password reset token and sets its expiration.
+
+        The token is a secure random string and expires in 1 hour.
+        """
+        self.password_reset_token = secrets.token_urlsafe(64)
+        self.token_expires_at = datetime.now(timezone.utc) + timedelta(hours=1)  # Token valid for 1 hour
+        self.save()  # Save to the database

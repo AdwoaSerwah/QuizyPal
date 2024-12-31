@@ -8,7 +8,6 @@ from sqlalchemy.orm import scoped_session, sessionmaker
 from typing import Optional, Dict, Type, Any
 from models.base_model import Base
 from models.user import User
-from models.password_reset_token import PasswordResetToken
 from models.topic import Topic
 from models.quiz import Quiz
 from models.question import Question
@@ -18,7 +17,6 @@ from models.result import Result
 import models
 
 classes = {"User": User,
-           "PasswordResetToken": PasswordResetToken,
            "Topic": Topic,
            "Quiz": Quiz,
            "Question": Question,
