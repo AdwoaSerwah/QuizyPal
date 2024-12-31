@@ -69,39 +69,6 @@ class TestDBStorage(unittest.TestCase):
         self.db_storage.delete(mock_obj)
         mock_delete.assert_called_once_with(mock_obj)
 
-    @patch('models.engine.db_storage.DBStorage.get')
-    def test_get(self, mock_get):
-        """
-        Test the 'get' method which retrieves an object by ID.
-        """
-        mock_obj = MagicMock(id="1234")
-        mock_get.return_value = mock_obj
-
-        result = self.db_storage.get(User, "1234")
-        self.assertEqual(result.id, "1234")
-
-    @patch('models.engine.db_storage.DBStorage.get_by_email')
-    def test_get_by_email(self, mock_get_by_email):
-        """
-        Test the 'get_by_email' method which retrieves a user by email.
-        """
-        mock_user = MagicMock(email="testuser@example.com")
-        mock_get_by_email.return_value = mock_user
-
-        result = self.db_storage.get_by_email(User, "testuser@example.com")
-        self.assertEqual(result.email, "testuser@example.com")
-
-    @patch('models.engine.db_storage.DBStorage.get_by_username')
-    def test_get_by_username(self, mock_get_by_username):
-        """
-        Test the 'get_by_username' method which retrieves a user by username.
-        """
-        mock_user = MagicMock(username="testuser")
-        mock_get_by_username.return_value = mock_user
-
-        result = self.db_storage.get_by_username(User, "testuser")
-        self.assertEqual(result.username, "testuser")
-
     @patch('models.engine.db_storage.DBStorage.count')
     def test_count(self, mock_count):
         """

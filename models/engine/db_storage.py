@@ -6,12 +6,26 @@ Contains the class DBStorage for interacting with the MySQL database.
 import models
 from models.base_model import Base
 from models.user import User
+from models.password_reset_token import PasswordResetToken
+from models.topic import Topic
+from models.quiz import Quiz
+from models.question import Question
+from models.choice import Choice
+from models.user_answer import UserAnswer
+from models.result import Result
 from os import getenv
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
 from typing import Optional, Dict, Type, Any
 
-classes = {"User": User}
+classes = {"User": User,
+           "PasswordResetToken": PasswordResetToken,
+           "Topic": Topic,
+           "Quiz": Quiz,
+           "Question": Question,
+           "Choice": Choice,
+           "UserAnswer": UserAnswer,
+           "Result": Result}
 
 
 class DBStorage:
@@ -31,10 +45,15 @@ class DBStorage:
         the database.
         """
         FLASK_ENV = getenv('FLASK_ENV')
-        DATABASE_URL = getenv('DATABASE_URL')
+        if FLASK_ENV == "test":
+            DATABASE_URL = getenv('DATABASE_TEST_URL')
+        else:
+            DATABASE_URL = getenv('DATABASE_URL')
+        
         self.__engine = create_engine(DATABASE_URL)
 
         if FLASK_ENV == "test":
+            # Drop all tables in the test database
             Base.metadata.drop_all(self.__engine)
 
     def all(self, cls: Optional[Type[Base]] = None) -> Dict[str, Base]:
@@ -104,83 +123,34 @@ class DBStorage:
         """
         self.__session.remove()
 
-    def get(self, cls: Type[Base], id: str) -> Optional[Base]:
+    def get_by_value(self, cls: Type[Base], field: str, value: Any) -> Optional[Any]:
         """
-        Retrieves an object based on the class name and its ID.
+        Retrieves an object based on the class name and the specified field's value.
 
         Args:
             cls (Type[Base]): The class type to search for.
-            id (str): The ID of the object to retrieve.
+            field (str): The field to search by (e.g., 'id', 'username', 'email').
+            value (Any): The value to search for in the specified field.
 
         Returns:
-            Optional[Base]: The object if found, otherwise None.
+            Optional[Any]: A single object if found, a list of objects if multiple matches
+                            are found, or None if no matches are found.
         """
-        if cls not in classes.values():
+        if cls not in classes.values() or not hasattr(cls, field):
             return None
 
         all_cls = models.storage.all(cls)
-        for value in all_cls.values():
-            if value.id == id:
-                return value
+        matches = []
 
-        return None
+        for obj in all_cls.values():
+            if getattr(obj, field, None) == value:
+                matches.append(obj)
 
-    def get_by_email(self, cls: Type[Base], email: str) -> Optional[Base]:
-        """
-        Retrieves an object based on the class name and email.
+        if len(matches) == 1:
+            return matches[0]
+        elif len(matches) > 1:
+            return matches
 
-        Args:
-            cls (Type[Base]): The class type to search for.
-            email (str): The email to search for.
-
-        Returns:
-            Optional[Base]: The object if found, otherwise None.
-        """
-        if cls not in classes.values() or not hasattr(cls, 'email'):
-            return None
-
-        all_cls = self.all(cls)
-        for value in all_cls.values():
-            if getattr(value, 'email', None) == email:
-                return value
-
-        return None
-
-    def get_by_username(self, cls: Type[Base], username: str) -> Optional[Base]:  # noqa
-        """
-        Retrieves an object based on the class name and username.
-
-        Args:
-            cls (Type[Base]): The class type to search for.
-            username (str): The username to search for.
-
-        Returns:
-            Optional[Base]: The object if found, otherwise None.
-        """
-        if cls not in classes.values() or not hasattr(cls, 'username'):
-            return None
-
-        all_cls = self.all(cls)
-        for value in all_cls.values():
-            if getattr(value, 'username', None) == username:
-                return value
-
-        return None
-
-    def get_by_token(self, token: str) -> Optional[User]:
-        """
-        Retrieves a user object by reset token.
-
-        Args:
-            token (str): The reset token to search for.
-
-        Returns:
-            Optional[User]: The user if found, otherwise None.
-        """
-        users = self.all(User).values()
-        for user in users:
-            if user.reset_token == token:
-                return user
         return None
 
     def count(self, cls: Optional[Type[Base]] = None) -> int:
