@@ -3,17 +3,32 @@
 Route module for the API
 """
 
-from api.v1.views import app_views
+from dotenv import load_dotenv
 from flask import Flask, jsonify
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from os import getenv
-from dotenv import load_dotenv
 from typing import Optional
+from celery import Celery
+from api.v1.views import app_views
+from models import storage
+# from sqlalchemy.exc import OperationalError
+# import time
+
+
 
 # Load environment variables from a .env file
 load_dotenv()
+
+def make_celery(app):
+    celery = Celery(
+        app.import_name,
+        broker=app.config['REDIS_URL'],
+        backend=app.config['REDIS_URL']
+    )
+    celery.conf.update(app.config)
+    return celery
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -23,17 +38,22 @@ app.config['JSONIFY_PRETTYPRINT_REGULAR'] = True
 app.config['SQLALCHEMY_DATABASE_URI'] = getenv("DATABASE_URL")
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False  # Suppress the warning
 app.config['SECRET_KEY'] = getenv('SECRET_KEY')
+app.config['REDIS_URL'] = getenv("REDIS_URL")
 
-# Initialize SQLAlchemy and Flask-Migrate
+# Initialize SQLAlchemy object
 db = SQLAlchemy(app)
+
+# Initialize Flask-Migrate with app and Base (Base contains the models' metadata)
 migrate = Migrate(app, db)
+
+# Create Celery app
+celery = make_celery(app)
 
 # Register the blueprint for API routes
 app.register_blueprint(app_views)
 
 # Enable CORS for the API, allowing all origins for `/api/v1/*` routes
 CORS(app, resources={r"/api/v1/*": {"origins": "*"}})
-
 
 # Error Handlers
 @app.errorhandler(404)
@@ -90,7 +110,7 @@ def create_app() -> Flask:
         Flask: The created Flask application instance.
     """
     with app.app_context():
-        db.create_all()  # Ensure all tables are created
+        storage.reload()  # Ensure storage is fully initialized
     return app
 
 

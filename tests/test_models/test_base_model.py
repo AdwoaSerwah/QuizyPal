@@ -1,3 +1,7 @@
+#!/usr/bin/env python3
+"""
+Contains tests for BaseModel class
+"""
 import unittest
 from unittest.mock import patch, MagicMock
 from models.base_model import BaseModel
