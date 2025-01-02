@@ -5,7 +5,7 @@ This class interacts with the database via SQLAlchemy for data persistence.
 """
 
 from models.base_model import BaseModel, Base
-from sqlalchemy import Column, String, Boolean, ForeignKey, Index, Integer
+from sqlalchemy import Column, String, Boolean, ForeignKey, Index, Integer, UniqueConstraint
 from sqlalchemy.orm import relationship
 from typing import Optional
 
@@ -18,6 +18,7 @@ class Question(BaseModel, Base):
     Attributes:
         quiz_id (str): The ID of the quiz to which the question belongs.
         question_text (str): The text of the question.
+        order_number (int): The position of the question in the quiz.
         allow_multiple_answers (bool): Whether the question allows multiple answers.
         created_at (datetime): The timestamp when the question was created.
         updated_at (datetime): The timestamp when the question was last updated.
@@ -27,7 +28,7 @@ class Question(BaseModel, Base):
 
     quiz_id: str = Column(String(60), ForeignKey('quizzes.id'), nullable=False)
     question_text: str = Column(String(255), nullable=False)
-    order_number: int = Column(Integer, nullable=False)  # New field
+    order_number: int = Column(Integer, nullable=False)
     allow_multiple_answers: bool = Column(Boolean, default=False, nullable=False)
 
     # Relationship with Quiz table
@@ -39,9 +40,10 @@ class Question(BaseModel, Base):
     # Relationship with UserAnswer table
     user_answers = relationship('UserAnswer', back_populates='question', cascade="all, delete-orphan")
 
-    # Add indexes for optimized searches
+    # Add indexes for optimized searches and constraints for uniqueness
     __table_args__ = (
         Index('idx_quiz_id_id', 'quiz_id', 'id'),  # Composite index
+        UniqueConstraint('quiz_id', 'question_text', name='uq_quiz_question_text'),  # Unique constraint
     )
 
     def __init__(self, *args: tuple, **kwargs: dict) -> None:

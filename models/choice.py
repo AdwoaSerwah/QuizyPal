@@ -5,7 +5,7 @@ This class interacts with the database via SQLAlchemy for data persistence.
 """
 
 from models.base_model import BaseModel, Base
-from sqlalchemy import Column, String, Boolean, ForeignKey, Integer
+from sqlalchemy import Column, String, Boolean, ForeignKey, Integer, UniqueConstraint
 from sqlalchemy.orm import relationship
 from typing import Optional
 
@@ -35,6 +35,10 @@ class Choice(BaseModel, Base):
 
     # Relationship with UserAnswer table
     user_answers = relationship('UserAnswer', back_populates='choice', cascade="all, delete-orphan")
+
+    __table_args__ = (
+        UniqueConstraint('question_id', 'choice_text', name='uq_question_choice_text'),  # Ensure unique choice per question
+    )
 
     def __init__(self, *args: tuple, **kwargs: dict) -> None:
         """

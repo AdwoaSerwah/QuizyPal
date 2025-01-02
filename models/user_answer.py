@@ -28,17 +28,20 @@ class UserAnswer(BaseModel, Base):
     quiz_id: str = Column(String(60), ForeignKey('quizzes.id'), nullable=False)
     question_id: str = Column(String(60), ForeignKey('questions.id'), nullable=False)
     choice_id: str = Column(String(60), ForeignKey('choices.id'), nullable=False, index=True)
+    result_id: str = Column(String(60), ForeignKey('results.id'), nullable=False)  # Reference to the quiz attempt (Result)
+
 
     # Relationships with other tables
     user = relationship('User', back_populates='user_answers')
     quiz = relationship('Quiz', back_populates='user_answers')
     question = relationship('Question', back_populates='user_answers')
     choice = relationship('Choice', back_populates='user_answers')
+    result = relationship('Result', back_populates='user_answers')  # Linking to the Result table
 
-    # Add composite index for quick lookups
     __table_args__ = (
-        Index('idx_user_quiz_question', 'user_id', 'quiz_id', 'question_id'),
+        Index('idx_result_user_quiz_question', 'result_id', 'user_id', 'quiz_id', 'question_id'),
     )
+
 
     def __init__(self, *args: tuple, **kwargs: dict) -> None:
         """

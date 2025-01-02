@@ -44,16 +44,17 @@ class Result(BaseModel, Base):
     quiz_id: str = Column(String(60), ForeignKey('quizzes.id'), nullable=False)
 
     # Fields related to the result
-    score: Decimal = Column(DECIMAL(5, 2), nullable=False)  # Score as DECIMAL(5,2)
-    time_taken: int = Column(Integer, nullable=False)  # Time taken in seconds
+    score: Decimal = Column(DECIMAL(5, 2), nullable=False, default=Decimal('0.00'))
+    time_taken: int = Column(Integer, nullable=False, default=0)  # Initially set to 0
     status: str = Column(Enum(QuizSessionStatus), nullable=False, default=QuizSessionStatus.IN_PROGRESS)  # Enum for status
-    submitted_at: datetime = Column(DateTime, default=lambda: datetime.now(timezone.utc))  # Standardized timestamp
-    start_time: datetime = Column(DateTime, default=lambda: datetime.now(timezone.utc))  # Start time
-    end_time: datetime = Column(DateTime, nullable=True)  # End time for quiz session
+    submitted_at: datetime = Column(DateTime, nullable=True, default=lambda: datetime.now(timezone.utc))  # Standardized timestamp
+    start_time: datetime = Column(DateTime, nullable=True, default=lambda: datetime.now(timezone.utc))  # Start time
+    end_time: datetime = Column(DateTime, nullable=True, default=lambda: datetime.now(timezone.utc))  # End time for quiz session
 
     # Relationships to link to User and Quiz tables
     user = relationship('User', back_populates='results')
     quiz = relationship('Quiz', back_populates='results')
+    user_answers = relationship('UserAnswer', back_populates='result', cascade="all, delete-orphan")
 
     # Composite index for user_id and quiz_id
     __table_args__ = (
@@ -105,3 +106,5 @@ class Result(BaseModel, Base):
                 f"submitted_at={self.submitted_at}, start_time={self.start_time}, "
                 f"end_time={self.end_time}, created_at={self.created_at}, "
                 f"updated_at={self.updated_at})")
+
+

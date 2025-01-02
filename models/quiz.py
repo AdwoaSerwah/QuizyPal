@@ -30,7 +30,7 @@ class Quiz(BaseModel, Base):
     
     # Fields related to the quiz
     title: str = Column(String(128), nullable=False, unique=True)  # Ensure quiz title is unique
-    description: Optional[str] = Column(String(256), nullable=True)
+    description: Optional[str] = Column(String(255), nullable=True)
     time_limit: int = Column(Integer, nullable=False)
 
     # Relationships to link to Topic and Result tables
