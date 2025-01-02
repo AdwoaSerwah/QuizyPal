@@ -2,3 +2,7 @@ __pycache__/
 *.env
 .vscode/
 .DS_Store
+tables
+main.py
+migrations/
+.pytest_cache/
