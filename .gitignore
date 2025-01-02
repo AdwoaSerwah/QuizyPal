@@ -5,3 +5,4 @@ __pycache__/
 tables
 main.py
 migrations/
+.pytest_cache/

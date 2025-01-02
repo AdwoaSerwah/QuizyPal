@@ -12,6 +12,11 @@ from os import getenv
 from typing import Optional
 from celery import Celery
 from api.v1.views import app_views
+from models import storage
+# from sqlalchemy.exc import OperationalError
+# import time
+
+
 
 # Load environment variables from a .env file
 load_dotenv()
@@ -105,7 +110,7 @@ def create_app() -> Flask:
         Flask: The created Flask application instance.
     """
     with app.app_context():
-        db.create_all()  # Ensure all tables are created
+        storage.reload()  # Ensure storage is fully initialized
     return app
 
 
