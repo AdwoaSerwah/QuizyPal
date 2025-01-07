@@ -36,17 +36,17 @@ class TestBaseModel(unittest.TestCase):
         self.base_model_instance.save()
         mock_save.assert_called_once()
 
-    @patch.object(BaseModel, 'to_dict')
-    def test_to_dict(self, mock_to_dict):
+    @patch.object(BaseModel, 'to_json')
+    def test_to_json(self, mock_to_json):
         """
         Test the to_dict method.
         """
-        mock_to_dict.return_value = {
+        mock_to_json.return_value = {
             'id': self.base_model_instance.id,
             'created_at': self.base_model_instance.created_at.isoformat(),
             'updated_at': self.base_model_instance.updated_at.isoformat()
         }
-        result = self.base_model_instance.to_dict()
+        result = self.base_model_instance.to_json()
         self.assertEqual(result['id'], self.base_model_instance.id)
         self.assertEqual(result['created_at'], self.base_model_instance.created_at.isoformat())
         self.assertEqual(result['updated_at'], self.base_model_instance.updated_at.isoformat())

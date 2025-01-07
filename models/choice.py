@@ -26,7 +26,7 @@ class Choice(BaseModel, Base):
     __tablename__ = 'choices'
 
     question_id: str = Column(String(60), ForeignKey('questions.id'), nullable=False, index=True)
-    choice_text: str = Column(String(255), nullable=False)
+    choice_text: str = Column(String(255), nullable=False, default="no_answer")
     is_correct: bool = Column(Boolean, nullable=False, default=False)
     order_number: int = Column(Integer, nullable=False)  # New field
 
