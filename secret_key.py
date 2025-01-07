@@ -1,8 +1,5 @@
 #!/usr/bin/env python3
-"""This module generates a secret key"""
 
-import os
-
-# Generate a random secret key
-secret_key = os.urandom(24)
-print(secret_key.hex())
+import secrets
+secret_key = secrets.token_hex(32)  # 32-byte secret key
+print(secret_key)
