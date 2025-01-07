@@ -1,0 +1,98 @@
+swagger: "2.0"
+info:
+  description: "This API allows users to delete a specific user from the system."
+  version: "1.0.0"
+  title: "User Management API"
+
+host: "localhost"
+basePath: "/api/v1"
+
+paths:
+  /users/{user_id}:
+    delete:
+      summary: "Delete a specific user"
+      description: |
+        This endpoint allows an authenticated user to delete a specific user.
+        Only admins or the user themselves can delete their account. If the user
+        doesn't exist, a 404 error will be returned.
+
+      operationId: "deleteUser"
+      tags:
+        - "Users"
+
+      parameters:
+        - name: "Authorization"
+          in: "header"
+          description: "JWT authentication token required for accessing this endpoint"
+          required: true
+          type: "string"
+        - name: "user_id"
+          in: "path"
+          description: "The ID of the user to be deleted"
+          required: true
+          type: "string"
+
+      responses:
+        200:
+          description: "User successfully deleted"
+          schema:
+            type: "object"
+            properties:
+              message:
+                type: "string"
+                example: "User successfully deleted."
+
+        400:
+          description: "Bad request. Invalid User ID."
+          schema:
+            type: "object"
+            properties:
+              message:
+                type: "string"
+                example: "Invalid User ID"
+
+        401:
+          description: "Unauthorized access. Invalid or missing JWT token."
+          schema:
+            type: "object"
+            properties:
+              message:
+                type: "string"
+                example: "Missing or invalid JWT token"
+
+        403:
+          description: "Forbidden. Only admins or the user themselves can delete the account."
+          schema:
+            type: "object"
+            properties:
+              message:
+                type: "string"
+                example: "You are not authorized to delete this user."
+
+        404:
+          description: "User not found."
+          schema:
+            type: "object"
+            properties:
+              message:
+                type: "string"
+                example: "User not found"
+
+        500:
+          description: "Internal server error. Unable to delete the user."
+          schema:
+            type: "object"
+            properties:
+              message:
+                type: "string"
+                example: "An error occurred while trying to delete the user."
+
+      security:
+        - jwtAuth: []
+
+securityDefinitions:
+  jwtAuth:
+    type: "apiKey"
+    in: "header"
+    name: "Authorization"
+    description: "JWT authentication token"

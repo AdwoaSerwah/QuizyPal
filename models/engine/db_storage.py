@@ -7,8 +7,9 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
 from typing import Optional, Any, Union, List, Type, Dict
 
-from models.base_model import Base
+from models.base_model import Base, BaseModel
 from models.user import User
+from models.refresh_token import RefreshToken
 from models.topic import Topic
 from models.quiz import Quiz
 from models.question import Question
@@ -20,6 +21,7 @@ import models
 
 
 classes = {"User": User,
+           "RefreshToken": RefreshToken,
            "Topic": Topic,
            "Quiz": Quiz,
            "Question": Question,
@@ -132,6 +134,28 @@ class DBStorage:
         """
         self.__session.remove()
 
+    def get(self, cls: Type[Base], id: int) -> Optional[Base]:
+        """
+        Returns the object based on the class name and its unique ID, or
+        None if not found.
+
+        Args:
+            cls (Type[Base]): The class type to query.
+            id (int): The ID of the object to retrieve.
+
+        Returns:
+            Optional[Base]: The object if found, otherwise None.
+        """
+        if cls not in classes.values():
+            return None
+
+        # Use SQLAlchemy to query the database for the object by ID
+        obj = self.__session.query(cls).filter_by(id=id).first()
+
+        # Return the object if found, otherwise None
+        return obj
+
+
     def get_by_value(
         self, cls: Type[Base], field: str, value: Any
     ) -> Union[Optional[Any], List[Any]]:
@@ -202,4 +226,3 @@ class DBStorage:
             if hasattr(cls, field):
                 query = query.filter(getattr(cls, field) == value)
         return query.all()
-

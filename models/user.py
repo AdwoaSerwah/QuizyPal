@@ -22,6 +22,22 @@ class Role(enum.Enum):
     USER = "user"
     ADMIN = "admin"
 
+    @classmethod
+    def from_str(cls, role_str: str) -> 'Role':
+        """
+        Convert a string to a Role enum member.
+
+        Args:
+            role_str (str): The string representation of the role.
+
+        Returns:
+            Role: Corresponding Role enum member.
+        """
+        for role in cls:
+            if role.value == role_str.lower():
+                return role
+        raise ValueError(f"Invalid role: {role_str}. Must be one of {[r.value for r in cls]}")
+
 
 class User(BaseModel, Base):
     """
@@ -45,12 +61,15 @@ class User(BaseModel, Base):
     email: str = Column(String(128), unique=True, nullable=False, index=True)
     password: str = Column(String(128), nullable=False)
     role: Role = Column(Enum(Role), default=Role.USER, nullable=False, index=True)
-    password_reset_token: Optional[str] = Column(String(128), unique=True, nullable=True)
-    token_expires_at: Optional[datetime] = Column(DateTime, nullable=True, default=lambda: datetime.now(timezone.utc))
+    reset_token: Optional[str] = Column(String(128), unique=True, nullable=True)
+    token_expiry: Optional[datetime] = Column(DateTime, nullable=True, default=lambda: datetime.now(timezone.utc))
 
     # One-to-many relationships with cascade delete
     results: list = relationship('Result', back_populates='user', cascade="all, delete-orphan")
     user_answers: list = relationship('UserAnswer', back_populates='user', cascade="all, delete-orphan")
+    # Update the User model to include the relationship
+    refresh_tokens = relationship('RefreshToken', back_populates='user', cascade="all, delete-orphan")
+
 
     def __init__(self, *args: tuple, **kwargs: dict) -> None:
         """
@@ -109,6 +128,6 @@ class User(BaseModel, Base):
 
         The token is a secure random string and expires in 1 hour.
         """
-        self.password_reset_token = secrets.token_urlsafe(64)
-        self.token_expires_at = datetime.now(timezone.utc) + timedelta(hours=1)  # Token valid for 1 hour
+        self.reset_token = secrets.token_urlsafe(64)
+        self.token_expiry = datetime.now(timezone.utc) + timedelta(hours=1)  # Token valid for 1 hour
         self.save()  # Save to the database
