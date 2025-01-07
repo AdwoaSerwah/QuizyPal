@@ -10,10 +10,12 @@ from sqlalchemy.ext.declarative import declarative_base
 import uuid
 from datetime import datetime, timezone
 import models
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, TypeVar
+from enum import Enum
 
 # Format for converting datetime objects to string
 time_format = "%Y-%m-%dT%H:%M:%S.%f"
+# time_format = "%Y-%m-%dT%H:%M:%S"
 Base = declarative_base()
 
 
@@ -63,6 +65,15 @@ class BaseModel():
             self.created_at = datetime.now(timezone.utc)
             self.updated_at = self.created_at
 
+    def __eq__(self, other: TypeVar('Base')) -> bool:
+        """ Equality
+        """
+        if type(self) != type(other):
+            return False
+        if not isinstance(self, Base):
+            return False
+        return (self.id == other.id)
+
     def __str__(self) -> str:
         """
         Returns a string representation of the BaseModel instance.
@@ -106,41 +117,29 @@ class BaseModel():
         models.storage.new(self)  # Register the instance in storage
         models.storage.save()  # Commit changes to the database
 
-    def to_dict(self, save_fs: Optional[bool] = None) -> Dict[str, Any]:
-        """
-        Converts the current instance to a dictionary format, which can be
-        used for JSON serialization or API responses.
+    def to_json(self, for_serialization: bool = False) -> dict:
+        """ Convert the object to a JSON dictionary """
+        # from models.user import Role
 
-        The dictionary includes the instance's attributes, with the
-        'created_at' and 'updated_at' fields formatted as strings.
+        result = {}
+        for key, value in self.__dict__.items():
+            if not for_serialization:
+                if (
+                    key in ['password', 'reset_token', 'token_expiry']
+                    or (key == 'choice_text' and value == 'no_answer')
+                    or key[0] == '_'
+                    ):  # noqa
+                    continue
 
-        Args:
-            save_fs (bool, optional): If provided, controls whether the
-            'password' field is included in the dictionary
-            (default excludes it).
-
-        Returns:
-            dict: A dictionary representing the instance's attributes.
-        """
-        new_dict = self.__dict__.copy()
-        if "created_at" in new_dict:
-            new_dict["created_at"] = new_dict["created_at"].strftime(
-                time_format)
-        if "updated_at" in new_dict:
-            new_dict["updated_at"] = new_dict["updated_at"].strftime(
-                time_format)
-        new_dict["__class__"] = self.__class__.__name__
-
-        # Remove internal SQLAlchemy state if present
-        if "_sa_instance_state" in new_dict:
-            del new_dict["_sa_instance_state"]
-
-        # Optionally exclude password field for security reasons
-        if save_fs is None:
-            if "password" in new_dict:
-                del new_dict["password"]
-
-        return new_dict
+            if key == '_sa_instance_state':
+                continue
+            if type(value) is datetime:
+                result[key] = value.strftime(time_format)
+            elif isinstance(value, Enum):  # Check for enum and convert to string
+                result[key] = value.value
+            else:
+                result[key] = value
+        return result
 
     def delete(self) -> None:
         """
