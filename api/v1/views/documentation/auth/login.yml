@@ -1,108 +1,121 @@
 swagger: "2.0"
 info:
-  title: "QuizyPal API"
-  description: "API for user authentication, including login functionality. This route allows users to log in by verifying their credentials and receiving an access token and refresh token for subsequent authentication and access."
+  description: "This API allows users to authenticate by providing their username/email and password, generating an access token and a refresh token."
   version: "1.0.0"
+  title: "Authentication API"
+
+host: "localhost"
+basePath: "/api/v1"
+
 paths:
-  /api/v1/login:
+  /login:
     post:
-      summary: "Login a user"
+      summary: "Login and authenticate the user"
       description: |
-        Authenticates a user by verifying their credentials (either username or email and password),
-        generates an access token and a refresh token, and saves the refresh token in both the 
-        database and Redis cache for session management.
+        This route authenticates a user by verifying their credentials (username/email and password).
+        If the credentials are valid, the system generates an access token and refresh token and 
+        returns them to the user. The refresh token is also stored in both the database and Redis cache.
 
-        The access token is used for immediate access to protected routes, while the refresh token 
-        can be used to obtain new access tokens after the current one expires.
+      operationId: "login"
+      tags:
+        - "Authentication"
 
-        The user must provide either their username or email and password. 
-        If either the username/email or password is incorrect, the user will receive a 401 Unauthorized response.
-        
-        Successful authentication will return an access token, refresh token, and the token's ID.
-        
-        **Important:**
-        - Passwords should be hashed and securely checked.
-        - The refresh token has an expiration time (7 days), which is stored in Redis.
-      consumes:
-        - "application/json"
       parameters:
-        - in: "body"
-          name: "body"
-          description: "User credentials for login"
+        - name: "Authorization"
+          in: "header"
+          description: "JWT token required for refreshing the access token"
+          required: false
+          type: "string"
+        
+        - name: "loginData"
+          in: "body"
+          description: "The user credentials to authenticate."
           required: true
           schema:
             type: "object"
-            required:
-              - "password"
             properties:
               username:
                 type: "string"
-                description: "The username of the user. If provided, it must be unique."
-                example: "john_doe"
+                description: "The user's username (optional if email is provided)."
               email:
                 type: "string"
-                description: "The email address of the user. Either email or username is required."
-                example: "john.doe@example.com"
+                description: "The user's email (optional if username is provided)."
               password:
                 type: "string"
-                description: "The user's password. It must match the stored hashed password."
-                example: "securepassword123"
+                description: "The user's password."
+        
       responses:
         200:
-          description: "Login successful"
+          description: "User logged in successfully"
           schema:
             type: "object"
             properties:
               message:
                 type: "string"
-                description: "A message indicating the success of the login operation."
                 example: "Logged in successfully"
               access_token:
                 type: "string"
-                description: "JWT token used for authenticating further requests. Contains user identity and claims."
-                example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                description: "JWT access token"
               refresh_token:
                 type: "string"
-                description: "JWT refresh token used for renewing the access token when it expires."
-                example: "def50200e4d9b0601745e795c3a62950ef5b4f42cd7f12b92062a7ed3f8f46d232f6d4e5586be0796bc52f5f54e06bcf3f83..."
+                description: "JWT refresh token"
               token_id:
-                type: "integer"
-                description: "The ID of the refresh token stored in the database."
-                example: 12345
+                type: "string"
+                description: "ID of the refresh token stored in the database"
+          examples:
+            application/json:
+              {
+                "message": "Logged in successfully",
+                "access_token": "access-token-here",
+                "refresh_token": "refresh-token-here",
+                "token_id": "12345"
+              }
+
         400:
-          description: "Bad request, missing required fields or incorrect input data"
+          description: "Bad request. Missing or invalid data."
           schema:
             type: "object"
             properties:
               message:
                 type: "string"
-                description: "A message indicating the cause of the failure (e.g., missing fields)."
                 example: "Email or username and password are required!"
+          examples:
+            application/json:
+              {
+                "message": "Email or username and password are required!"
+              }
+
         401:
-          description: "Unauthorized, either the user was not found or the password is incorrect"
+          description: "Unauthorized. User not found or incorrect password."
           schema:
             type: "object"
             properties:
               message:
                 type: "string"
-                description: "A message indicating the cause of the failure (e.g., user not found or incorrect password)."
                 example: "User not found!"
+          examples:
+            application/json:
+              {
+                "message": "User not found!"
+              }
+
         500:
-          description: "Internal server error, unexpected issues during the login process"
+          description: "Internal server error. Unexpected error during token saving."
           schema:
             type: "object"
             properties:
-              message:
+              error:
                 type: "string"
-                description: "A message indicating that an unexpected error occurred."
                 example: "An unexpected error occurred"
-        security:
-          - JWT: []
-definitions:
-  JWT:
+          examples:
+            application/json:
+              {
+                "error": "An unexpected error occurred"
+              }
+
+securityDefinitions:
+  jwtAuth:
     type: "apiKey"
     in: "header"
     name: "Authorization"
-    description: "JWT token used to authenticate the user."
-    required: false
-    x-security: "JWT token required for authentication."
+    description: "JWT authentication token"

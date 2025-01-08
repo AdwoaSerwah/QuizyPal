@@ -1,106 +1,126 @@
 swagger: "2.0"
 info:
-  title: "QuizyPal API"
-  description: "API for user authentication, specifically for refreshing the access token and the refresh token. This endpoint allows users to obtain new access and refresh tokens by providing a valid refresh token. The refresh token will be rotated to ensure it remains valid and is not blacklisted."
+  description: "This API allows the user to refresh the access token and refresh token by providing the refresh token ID. The refresh token is rotated to ensure security."
   version: "1.0.0"
+  title: "Authentication API"
+
+host: "localhost"
+basePath: "/api/v1"
+
 paths:
-  /api/v1/refresh-token:
+  /refresh-token:
     post:
-      summary: "Refresh Access and Refresh Tokens"
+      summary: "Refreshes the access token and the refresh token"
       description: |
-        Refreshes the user's access token and refresh token, ensuring the old refresh 
-        token is valid and not blacklisted. If Redis is unavailable, the system falls back 
-        to checking the refresh token in the database. Once verified, a new access token 
-        and a rotated refresh token are issued.
+        This route refreshes the user's access token and refresh token. The refresh token
+        is rotated to ensure its validity and prevent misuse. The process checks Redis for the 
+        stored refresh token and falls back to the database if Redis is unavailable.
+        The refresh token is also blacklisted after it is used.
 
-        **Important:**
-        - The provided refresh token should be valid and not expired.
-        - If Redis is down, the database will be used to verify the refresh token.
-        - If the refresh token is blacklisted, a 401 Unauthorized response is returned.
-        - The new refresh token will replace the old one and be saved both in the database and Redis.
+      operationId: "refreshToken"
+      tags:
+        - "Authentication"
 
-        The refresh token ID is mandatory in the request body for token validation.
-      consumes:
-        - "application/json"
       parameters:
-        - in: "body"
-          name: "body"
-          description: "The ID of the refresh token to be rotated"
+        - name: "Authorization"
+          in: "header"
+          description: "JWT token required for authenticating the refresh token request"
+          required: true
+          type: "string"
+        
+        - name: "token_id"
+          in: "body"
+          description: "The ID of the refresh token to be rotated."
           required: true
           schema:
             type: "object"
-            required:
-              - "token_id"
             properties:
               token_id:
-                type: "integer"
-                description: "The ID of the refresh token to be refreshed. It must exist in the database."
-                example: 12345
+                type: "string"
+                description: "The refresh token ID to be rotated."
+        
       responses:
         200:
-          description: "Tokens successfully refreshed"
+          description: "Success. The access token and refresh token have been refreshed."
           schema:
             type: "object"
             properties:
-              message:
+              token_id:
                 type: "string"
-                description: "A message indicating the success of the refresh operation."
-                example: "Tokens refreshed successfully"
+                description: "ID of the new refresh token."
               access_token:
                 type: "string"
-                description: "The new JWT access token used for authenticating further requests."
-                example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                description: "The new access token"
               refresh_token:
                 type: "string"
-                description: "The new JWT refresh token used for refreshing access tokens when expired."
-                example: "def50200e4d9b0601745e795c3a62950ef5b4f42cd7f12b92062a7ed3f8f46d232f6d4e5586be0796bc52f5f54e06bcf3f83..."
-              token_id:
-                type: "integer"
-                description: "The ID of the new refresh token stored in the database."
-                example: 12346
+                description: "The new refresh token"
+          examples:
+            application/json:
+              {
+                "token_id": "12345",
+                "access_token": "new-access-token-here",
+                "refresh_token": "new-refresh-token-here"
+              }
+
         400:
-          description: "Bad request, missing refresh token ID or incorrect data"
+          description: "Bad request. Missing or invalid data."
           schema:
             type: "object"
             properties:
-              message:
+              error:
                 type: "string"
-                description: "A message indicating that required fields were missing."
                 example: "Refresh token ID is required"
+          examples:
+            application/json:
+              {
+                "error": "Refresh token ID is required"
+              }
+
         401:
-          description: "Unauthorized, invalid, expired, or blacklisted refresh token"
+          description: "Unauthorized. Invalid, expired, or revoked refresh token."
           schema:
             type: "object"
             properties:
-              message:
+              error:
                 type: "string"
-                description: "A message indicating that the refresh token is invalid or expired."
                 example: "Invalid or expired refresh token"
+          examples:
+            application/json:
+              {
+                "error": "Invalid or expired refresh token"
+              }
+
         404:
-          description: "User not found"
+          description: "User not found."
           schema:
             type: "object"
             properties:
-              message:
+              error:
                 type: "string"
-                description: "A message indicating that the user was not found."
                 example: "User not found"
+          examples:
+            application/json:
+              {
+                "error": "User not found"
+              }
+
         500:
-          description: "Internal server error, unexpected issues during the token refresh process"
+          description: "Internal server error. Redis or database failure."
           schema:
             type: "object"
             properties:
-              message:
+              error:
                 type: "string"
-                description: "A message indicating that an unexpected error occurred."
                 example: "An unexpected error occurred"
-        security:
-          - JWT: []
-definitions:
-  JWT:
+          examples:
+            application/json:
+              {
+                "error": "An unexpected error occurred"
+              }
+
+securityDefinitions:
+  jwtAuth:
     type: "apiKey"
     in: "header"
     name: "Authorization"
-    description: "JWT token used to authenticate the user."
-    required: true
-    x-security: "JWT token required for authentication."
+    description: "JWT authentication token"

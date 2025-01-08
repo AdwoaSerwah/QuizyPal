@@ -5,7 +5,7 @@ Each token is linked to a specific user and includes expiration handling, as wel
 """
 
 from models.base_model import BaseModel, Base
-from sqlalchemy import Column, String, ForeignKey, DateTime, Text, Index
+from sqlalchemy import Column, String, ForeignKey, DateTime, Text, Index, Boolean
 from sqlalchemy.orm import relationship
 from datetime import datetime, timezone, timedelta
 import secrets
@@ -29,6 +29,7 @@ class RefreshToken(BaseModel, Base):
     token: str = Column(String(512), nullable=False, unique=True, index=True)
     user_id: str = Column(String(60), ForeignKey('users.id'), nullable=False, index=True)
     expires_at: datetime = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc) + timedelta(days=7))
+    is_expired: bool = Column(Boolean, nullable=False, default=False)
     # device_id: str = Column(String(128), nullable=False, unique=True)  # New field for device ID
 
     # Define a relationship back to the User model
