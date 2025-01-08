@@ -6,7 +6,7 @@ from api.v1.views import app_views
 from models import storage
 from models.user import User
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from api.v1.utils.auth_utils import admin_required
+from api.v1.services.auth_service import admin_required
 
 
 @app_views.route('/unauthorized', methods=['GET'], strict_slashes=False)

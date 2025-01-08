@@ -3,7 +3,7 @@
 Route module for the API
 """
 
-from flask import Flask, jsonify
+from flask import Flask, jsonify, redirect
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
@@ -130,8 +130,10 @@ def forbidden_error(error) -> str:
     return jsonify({"error": message}), 403
 
 # Swagger setup
-app.config['SWAGGER'] = {'title': 'QuizyPal Restful API', 'uiversion': 1}
+# app.config['SWAGGER_UI_JSONEDITOR'] = True  # This allows you to edit the API documentation
+app.config['SWAGGER'] = {'title': 'QuizyPal Restful API', 'uiversion': 2}
 Swagger(app)
+
 
 if __name__ == "__main__":
     host = getenv("API_HOST", "0.0.0.0")

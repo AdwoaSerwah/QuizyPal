@@ -16,15 +16,16 @@ from models.user import User, Role
 from models.refresh_token import RefreshToken
 from config import redis_client
 from datetime import timedelta
-from flasgger.utils import swag_from
 from models import storage
 from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt, verify_jwt_in_request
 from email_validator import validate_email, EmailNotValidError
+from flasgger.utils import swag_from
 
 
-@app_views.route('/users', methods=['GET'], strict_slashes=False)
-@jwt_required()
+
 @swag_from('documentation/user/get_users.yml')
+@jwt_required()
+@app_views.route('/users', methods=['GET'], strict_slashes=False)
 def get_users() -> str:
     """
     GET /api/v1/users
