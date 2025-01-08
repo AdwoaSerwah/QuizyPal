@@ -1,8 +1,8 @@
 swagger: "2.0"
 info:
-  description: "This API allows users to update their information or another user's information."
+  description: "This API allows an authenticated user or an admin to update a user's information."
   version: "1.0.0"
-  title: "User Management API"
+  title: "Update User API"
 
 host: "localhost"
 basePath: "/api/v1"
@@ -10,55 +10,50 @@ basePath: "/api/v1"
 paths:
   /users/{user_id}:
     put:
-      summary: "Update a user's information"
+      summary: "Update user information."
       description: |
-        This endpoint allows an authenticated user to update their personal information.
-        Admins can update any user's information, while regular users can only update their own details.
-
+        This route allows an authenticated user or admin to update a user's details 
+        (such as first name, last name, username, email, and password). 
+        Role updates are restricted to admin users only.
+      
       operationId: "updateUser"
       tags:
-        - "Users"
+        - "User"
 
       parameters:
-        - name: "Authorization"
-          in: "header"
-          description: "JWT authentication token required for accessing this endpoint"
-          required: true
-          type: "string"
         - name: "user_id"
           in: "path"
-          description: "The ID of the user to be updated"
+          description: "The unique identifier for the user to be updated."
           required: true
           type: "string"
-        - name: "first_name"
+          
+        - name: "body"
           in: "body"
-          description: "The first name of the user (optional)"
-          required: false
-          type: "string"
-        - name: "last_name"
-          in: "body"
-          description: "The last name of the user (optional)"
-          required: false
-          type: "string"
-        - name: "username"
-          in: "body"
-          description: "The username of the user (optional)"
-          required: false
-          type: "string"
-        - name: "email"
-          in: "body"
-          description: "The email address of the user (optional)"
-          required: false
-          type: "string"
-        - name: "password"
-          in: "body"
-          description: "The password of the user (optional)"
-          required: false
-          type: "string"
+          description: "The fields to be updated for the user."
+          required: true
+          schema:
+            type: "object"
+            properties:
+              first_name:
+                type: "string"
+              last_name:
+                type: "string"
+              username:
+                type: "string"
+              email:
+                type: "string"
+              password:
+                type: "string"
+              role:
+                type: "string"
+                enum: ["user", "admin"]
+
+      security:
+        - jwtAuth: []
 
       responses:
         200:
-          description: "User information successfully updated"
+          description: "User updated successfully."
           schema:
             type: "object"
             properties:
@@ -70,43 +65,59 @@ paths:
                 properties:
                   id:
                     type: "string"
+                    example: "12345"
+                  first_name:
+                    type: "string"
+                    example: "John"
+                  last_name:
+                    type: "string"
+                    example: "Doe"
                   username:
                     type: "string"
+                    example: "johndoe"
                   email:
                     type: "string"
+                    example: "john.doe@example.com"
+                  role:
+                    type: "string"
+                    example: "user"
                   created_at:
                     type: "string"
                     format: "date-time"
+                    example: "2025-01-07T00:00:00Z"
                   updated_at:
                     type: "string"
                     format: "date-time"
-
-        400:
-          description: "Bad request. Invalid or missing fields."
-          schema:
-            type: "object"
-            properties:
-              message:
-                type: "string"
-                example: "Email already registered!"
-
-        401:
-          description: "Unauthorized access. Invalid or missing JWT token."
-          schema:
-            type: "object"
-            properties:
-              message:
-                type: "string"
-                example: "Missing or invalid JWT token"
+                    example: "2025-01-07T12:00:00Z"
+          examples:
+            application/json:
+              {
+                "message": "User updated successfully!",
+                "user": {
+                  "id": "12345",
+                  "first_name": "John",
+                  "last_name": "Doe",
+                  "username": "johndoe",
+                  "email": "john.doe@example.com",
+                  "role": "user",
+                  "created_at": "2025-01-07T00:00:00Z",
+                  "updated_at": "2025-01-07T12:00:00Z"
+                }
+              }
 
         403:
-          description: "Forbidden. Only admins or the user themselves can update the account."
+          description: "Forbidden. The current user is not authorized to update this user."
           schema:
             type: "object"
             properties:
               message:
                 type: "string"
                 example: "You are not authorized to update this user."
+          examples:
+            application/json:
+              {
+                "message": "You are not authorized to update this user."
+              }
 
         404:
           description: "User not found."
@@ -115,19 +126,40 @@ paths:
             properties:
               message:
                 type: "string"
-                example: "User not found"
+                example: "User not found!"
+          examples:
+            application/json:
+              {
+                "message": "User not found!"
+              }
 
-        500:
-          description: "Internal server error. Unable to update the user."
+        400:
+          description: "Bad Request. Invalid input data."
           schema:
             type: "object"
             properties:
               message:
                 type: "string"
-                example: "An error occurred while trying to update the user."
+                example: "Invalid email format."
+          examples:
+            application/json:
+              {
+                "message": "Invalid email format."
+              }
 
-      security:
-        - jwtAuth: []
+        401:
+          description: "Unauthorized. Invalid or missing JWT token."
+          schema:
+            type: "object"
+            properties:
+              message:
+                type: "string"
+                example: "Missing or invalid token."
+          examples:
+            application/json:
+              {
+                "message": "Missing or invalid token."
+              }
 
 securityDefinitions:
   jwtAuth:

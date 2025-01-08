@@ -54,16 +54,29 @@ class TestUserViews(unittest.TestCase):
         """
         Test the GET /api/v1/users endpoint to retrieve all users.
         """
-        mock_all.return_value = [self.test_user]  # Simulate a list of users
+        # Create a mock user dictionary
+        mock_user_data = {
+            'user_id_1': User(id='user_id_1', username='newuser', email='newuser@example.com')
+        }
+        
+        # Mock the return value of storage.all() to be a dictionary of users
+        mock_all.return_value = mock_user_data
         
         headers = {
             'Authorization': 'Bearer <your_token>'  # Replace with an actual or mock token
         }
         
         response = self.client.get('/api/v1/users', headers=headers)
-        self.assertEqual(response.status_code, 422)
-        self.assertEqual(len(response.json), 1)  # Assuming only one user is returned
-        # self.assertEqual(response.json[0]['username'], 'newuser')
+        
+        # Check if the status code is 200 (OK)
+        self.assertEqual(response.status_code, 200)
+        
+        # Check that one user is returned
+        self.assertEqual(len(response.json), 1)
+        
+        # Check that the username matches the mock data
+        self.assertEqual(response.json[0]['username'], 'newuser')
+
 
     @patch('models.storage.get')  # Mock the 'get' method in the storage module
     def test_get_user(self, mock_get):

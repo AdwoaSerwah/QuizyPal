@@ -1,8 +1,7 @@
-swagger: "2.0"
 info:
-  description: "This API allows users to retrieve all users from the system."
+  description: "This API retrieves a list of all users from the storage."
   version: "1.0.0"
-  title: "User Management API"
+  title: "Get Users API"
 
 host: "localhost"
 basePath: "/api/v1"
@@ -10,89 +9,93 @@ basePath: "/api/v1"
 paths:
   /users:
     get:
-      summary: "Retrieve all users"
+      summary: "Retrieve all users."
       description: |
-        Retrieves all users from the system and returns them as a JSON response.
-        If there are no users in the database, it returns an empty list.
-
+        This route retrieves all user records from the storage and returns them as a 
+        JSON array. If no users are found, an empty list is returned.
+      
       operationId: "getUsers"
       tags:
-        - "Users"
-
-      parameters:
-        - name: "Authorization"
-          in: "header"
-          description: "JWT authentication token required for accessing this endpoint"
-          required: true
-          type: "string"
+        - "User"
+        
+      security:
+        - jwtAuth: []
 
       responses:
         200:
-          description: "Successful retrieval of all users"
+          description: "Successfully retrieved the list of users."
           schema:
             type: "array"
             items:
               type: "object"
               properties:
                 id:
-                  type: "string"
-                  description: "User ID"
+                  type: "integer"
+                  example: 1
+                  description: "The unique identifier for the user."
                 first_name:
                   type: "string"
-                  description: "The user's first name"
+                  example: "John"
                 last_name:
                   type: "string"
-                  description: "The user's last name"
+                  example: "Doe"
                 username:
                   type: "string"
-                  description: "The user's unique username"
+                  example: "johndoe"
                 email:
                   type: "string"
-                  description: "The user's email address"
+                  example: "johndoe@example.com"
                 role:
                   type: "string"
-                  description: "The user's role (e.g., 'user', 'admin')"
+                  example: "user"
                 created_at:
                   type: "string"
-                  format: "date-time"
-                  description: "The creation timestamp of the user"
+                  example: "2025-01-07T12:00:00Z"
+                  description: "The timestamp when the user was created."
                 updated_at:
                   type: "string"
-                  format: "date-time"
-                  description: "The timestamp when the user was last updated"
+                  example: "2025-01-07T12:00:00Z"
+                  description: "The timestamp of the last update made to the user."
+
           examples:
             application/json:
-              - id: "123"
-                first_name: "John"
-                last_name: "Doe"
-                username: "johndoe"
-                email: "johndoe@example.com"
-                role: "user"
-                created_at: "2025-01-01T12:00:00Z"
-                updated_at: "2025-01-01T12:00:00Z"
-              - id: "124"
-                first_name: "Jane"
-                last_name: "Doe"
-                username: "janedoe"
-                email: "janedoe@example.com"
-                role: "user"
-                created_at: "2025-01-02T12:00:00Z"
-                updated_at: "2025-01-02T12:00:00Z"
-              # If no users exist:
-              - []
+              [
+                {
+                  "id": 1,
+                  "first_name": "John",
+                  "last_name": "Doe",
+                  "username": "johndoe",
+                  "email": "johndoe@example.com",
+                  "role": "user",
+                  "created_at": "2025-01-07T12:00:00Z",
+                  "updated_at": "2025-01-07T12:00:00Z"
+                },
+                {
+                  "id": 2,
+                  "first_name": "Jane",
+                  "last_name": "Smith",
+                  "username": "janesmith",
+                  "email": "janesmith@example.com",
+                  "role": "admin",
+                  "created_at": "2025-01-07T12:00:00Z",
+                  "updated_at": "2025-01-07T12:00:00Z"
+                }
+              ]
 
         401:
-          description: "Unauthorized access. Invalid or missing JWT token."
+          description: "Unauthorized. Invalid or missing JWT token."
           schema:
             type: "object"
             properties:
               message:
                 type: "string"
-                example: "Missing or invalid JWT token"
-          
-      security:
-        - jwtAuth: []
-      
+                example: "Missing or invalid token."
+          examples:
+            application/json:
+              {
+                "message": "Missing or invalid token."
+              }
+
 securityDefinitions:
   jwtAuth:
     type: "apiKey"

@@ -245,23 +245,25 @@ def logout() -> Dict[str, Any]:
     redis_key = f"refresh_token:{current_user}:{refresh_token_id}"
 
     try:
-        # Fetch the refresh token from Redis
+        # Step 1: Check Redis for blacklisted status
+        old_refresh_jti = get_jwt()["jti"]
+        blacklist_key = f"blacklist:{old_refresh_jti}"
+
+        # Check if the token is already blacklisted
+        if redis_client.get(blacklist_key):
+            return jsonify({"error": "Token has been revoked"}), 401
+
+        # Step 2: Fetch the refresh token from Redis
         stored_refresh_token = redis_client.get(redis_key)
         if not stored_refresh_token:
             return jsonify({"error": "Invalid or expired refresh token"}), 401
 
-        # Decode the Redis token (if necessary, depending on your application)
-        # stored_refresh_token = stored_refresh_token.decode("utf-8")
-
-        # Get the JTI of the refresh token and blacklist it
-        old_refresh_jti = get_jwt()["jti"]
+        # Step 3: Blacklist the token in Redis
         redis_client.setex(
-            f"blacklist:{old_refresh_jti}",
+            blacklist_key,
             int(timedelta(days=7).total_seconds()),  # Set blacklist duration to match token expiry
             "blacklisted"
         )
-
-        # Do not delete the token from Redis, just blacklist it
 
         # Mark the refresh token as expired in the database
         db_refresh_token = storage.query(RefreshToken).filter_by(

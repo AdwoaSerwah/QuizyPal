@@ -1,8 +1,8 @@
 swagger: "2.0"
 info:
-  description: "This API allows users to create a new user in the system."
+  description: "This API allows for creating a new user by providing necessary details."
   version: "1.0.0"
-  title: "User Management API"
+  title: "User Creation API"
 
 host: "localhost"
 basePath: "/api/v1"
@@ -10,56 +10,55 @@ basePath: "/api/v1"
 paths:
   /users:
     post:
-      summary: "Create a new user"
+      summary: "Create a new user."
       description: |
-        This endpoint allows creating a new user in the system. The following fields
-        must be provided: first_name, last_name, username, email, and password.
-        The role field is optional, and the default role is 'user'.
-        Only admins can assign the 'admin' role during user creation.
+        This route creates a new user by accepting a JSON payload with the required information.
+        It checks for missing fields, validates the data, and ensures no duplicate users exist.
+        The new user is returned along with their ID, creation date, and updated date.
 
       operationId: "createUser"
       tags:
-        - "Users"
+        - "User"
 
       parameters:
-        - name: "Authorization"
-          in: "header"
-          description: "JWT authentication token required for accessing this endpoint"
-          required: true
-          type: "string"
         - name: "body"
           in: "body"
-          description: "User data that needs to be created"
+          description: "User data for creating a new account."
           required: true
           schema:
             type: "object"
             properties:
-              first_name:
-                type: "string"
-                description: "The user's first name"
-              last_name:
-                type: "string"
-                description: "The user's last name"
-              username:
-                type: "string"
-                description: "The user's unique username"
               email:
                 type: "string"
-                description: "The user's email address"
+                example: "johndoe@example.com"
+                description: "The user's email address (must be unique and valid)."
               password:
                 type: "string"
-                description: "The user's password"
+                example: "Password123"
+                description: "The user's password."
+              first_name:
+                type: "string"
+                example: "John"
+                description: "The user's first name."
+              last_name:
+                type: "string"
+                example: "Doe"
+                description: "The user's last name."
+              username:
+                type: "string"
+                example: "johndoe"
+                description: "The user's username (must be unique)."
               role:
                 type: "string"
-                description: "The user's role (default is 'user')"
+                example: "user"
+                description: "The user's role (default is 'user')."
                 enum:
                   - "user"
                   - "admin"
-                default: "user"
 
       responses:
         201:
-          description: "User successfully created"
+          description: "User successfully created."
           schema:
             type: "object"
             properties:
@@ -70,43 +69,48 @@ paths:
                 type: "object"
                 properties:
                   id:
-                    type: "string"
-                    description: "User ID"
+                    type: "integer"
+                    example: 1
+                    description: "The unique identifier for the user."
                   first_name:
                     type: "string"
-                    description: "The user's first name"
+                    example: "John"
                   last_name:
                     type: "string"
-                    description: "The user's last name"
+                    example: "Doe"
                   username:
                     type: "string"
-                    description: "The user's unique username"
+                    example: "johndoe"
                   email:
                     type: "string"
-                    description: "The user's email address"
+                    example: "johndoe@example.com"
                   role:
                     type: "string"
-                    description: "The user's role"
+                    example: "user"
                   created_at:
                     type: "string"
-                    format: "date-time"
-                    description: "The creation timestamp of the user"
+                    example: "2025-01-07T12:00:00Z"
+                    description: "The timestamp of when the user was created."
                   updated_at:
                     type: "string"
-                    format: "date-time"
-                    description: "The timestamp when the user was last updated"
+                    example: "2025-01-07T12:00:00Z"
+                    description: "The timestamp of the last update made to the user."
+
           examples:
             application/json:
-              message: "User created successfully"
-              user:
-                id: "125"
-                first_name: "Alice"
-                last_name: "Smith"
-                username: "alice123"
-                email: "alice@example.com"
-                role: "user"
-                created_at: "2025-01-06T12:00:00Z"
-                updated_at: "2025-01-06T12:00:00Z"
+              {
+                "message": "User created successfully",
+                "user": {
+                  "id": 1,
+                  "first_name": "John",
+                  "last_name": "Doe",
+                  "username": "johndoe",
+                  "email": "johndoe@example.com",
+                  "role": "user",
+                  "created_at": "2025-01-07T12:00:00Z",
+                  "updated_at": "2025-01-07T12:00:00Z"
+                }
+              }
 
         400:
           description: "Bad request. Missing or invalid data."
@@ -115,16 +119,12 @@ paths:
             properties:
               message:
                 type: "string"
-                example: "Missing first_name"
-
-        401:
-          description: "Unauthorized access. Invalid or missing JWT token."
-          schema:
-            type: "object"
-            properties:
-              message:
-                type: "string"
-                example: "Missing or invalid JWT token"
+                example: "Missing email"
+          examples:
+            application/json:
+              {
+                "message": "Missing email"
+              }
 
         403:
           description: "Forbidden. Only admins can assign the 'admin' role."
@@ -134,18 +134,25 @@ paths:
               message:
                 type: "string"
                 example: "Only admins can assign the role of 'Admin'."
+          examples:
+            application/json:
+              {
+                "message": "Only admins can assign the role of 'Admin'."
+              }
 
-        500:
-          description: "Internal Server Error. Unable to create the user."
+        409:
+          description: "Conflict. Username or email already exists."
           schema:
             type: "object"
             properties:
               message:
                 type: "string"
-                example: "An error occurred: Unable to save user to database."
-
-      security:
-        - jwtAuth: []
+                example: "Username already exists!"
+          examples:
+            application/json:
+              {
+                "message": "Username already exists!"
+              }
 
 securityDefinitions:
   jwtAuth:
