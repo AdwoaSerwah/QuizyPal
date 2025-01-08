@@ -1,0 +1,87 @@
+swagger: "2.0"
+info:
+  description: "This API allows administrators to delete a specific topic by its unique ID."
+  version: "1.0.0"
+  title: "Topic Management API"
+
+host: "localhost"
+basePath: "/api/v1"
+
+paths:
+  /topics/{topic_id}:
+    delete:
+      summary: "Delete a specific topic"
+      description: |
+        Deletes a specific topic from the system based on the provided topic ID.
+        Only authorized administrators can perform this action. If the topic does not 
+        exist, the API returns a 404 error.
+      operationId: "deleteTopic"
+      tags:
+        - "Topics"
+      parameters:
+        - name: "Authorization"
+          in: "header"
+          description: "JWT authentication token required for accessing this endpoint"
+          required: true
+          type: "string"
+        - name: "topic_id"
+          in: "path"
+          description: "The unique identifier of the topic to delete"
+          required: true
+          type: "string"
+      responses:
+        200:
+          description: "Topic successfully deleted"
+          schema:
+            type: "object"
+            properties:
+              message:
+                type: "string"
+          examples:
+            application/json:
+              {
+                "message": "Topic successfully deleted."
+              }
+        404:
+          description: "Topic not found"
+          schema:
+            type: "object"
+            properties:
+              message:
+                type: "string"
+          examples:
+            application/json:
+              {
+                "message": "Topic not found"
+              }
+        401:
+          description: "Unauthorized access. Invalid or missing JWT token."
+          schema:
+            type: "object"
+            properties:
+              message:
+                type: "string"
+          examples:
+            application/json:
+              {
+                "message": "Missing or invalid JWT token"
+              }
+        403:
+          description: "Forbidden. The current user is not authorized to perform this action."
+          schema:
+            type: "object"
+            properties:
+              message:
+                type: "string"
+          examples:
+            application/json:
+              {
+                "message": "You do not have permission to delete this topic."
+              }
+
+securityDefinitions:
+  jwtAuth:
+    type: "apiKey"
+    in: "header"
+    name: "Authorization"
+    description: "JWT authentication token"

@@ -1,0 +1,154 @@
+swagger: "2.0"
+info:
+  description: "This API allows users to update an existing topic by providing the necessary information in a JSON payload."
+  version: "1.0.0"
+  title: "Topic Management API"
+
+host: "localhost"
+basePath: "/api/v1"
+
+paths:
+  /topics/{topic_id}:
+    put:
+      summary: "Update an existing topic"
+      description: |
+        This route allows the update of an existing topic. The request must include the topic's 
+        name and optionally a parent_id. The topic name must be a string with a maximum length 
+        of 128 characters. The parent_id, if provided, must correspond to an existing parent topic. 
+        If any input is invalid or a duplicate topic is found, an error message will be returned.
+
+      operationId: "updateTopic"
+      tags:
+        - "Topics"
+      
+      parameters:
+        - name: "topic_id"
+          in: "path"
+          description: "The unique identifier of the topic to update"
+          required: true
+          type: "string"
+          
+        - name: "Authorization"
+          in: "header"
+          description: "JWT authentication token required for accessing this endpoint"
+          required: true
+          type: "string"
+
+        - name: "topic"
+          in: "body"
+          description: "The topic information to update. Must include a name and optional parent_id."
+          required: true
+          schema:
+            type: "object"
+            properties:
+              name:
+                type: "string"
+                description: "The name of the topic"
+              parent_id:
+                type: "integer"
+                description: "The ID of the parent topic (optional)"
+            
+      responses:
+        200:
+          description: "Topic updated successfully"
+          schema:
+            type: "object"
+            properties:
+              message:
+                type: "string"
+                example: "Topic updated successfully"
+              topic:
+                type: "object"
+                properties:
+                  id:
+                    type: "string"
+                    description: "The unique ID of the topic"
+                  name:
+                    type: "string"
+                    description: "The name of the topic"
+                  parent_id:
+                    type: "integer"
+                    description: "The ID of the parent topic (optional)"
+                  created_at:
+                    type: "string"
+                    format: "date-time"
+                    description: "The timestamp when the topic was created"
+                  updated_at:
+                    type: "string"
+                    format: "date-time"
+                    description: "The timestamp when the topic was last updated"
+          examples:
+            application/json:
+              {
+                "message": "Topic updated successfully",
+                "topic": {
+                  "id": "123",
+                  "name": "Updated Science",
+                  "parent_id": null,
+                  "created_at": "2025-01-01T12:00:00Z",
+                  "updated_at": "2025-01-01T12:30:00Z"
+                }
+              }
+
+        400:
+          description: "Bad request. Missing or invalid input data."
+          schema:
+            type: "object"
+            properties:
+              message:
+                type: "string"
+                example: "Topic name must be a string."
+          examples:
+            application/json:
+              {
+                "message": "Topic name must be a string."
+              }
+
+        404:
+          description: "Topic or parent not found."
+          schema:
+            type: "object"
+            properties:
+              message:
+                type: "string"
+                example: "Topic not found"
+          examples:
+            application/json:
+              {
+                "message": "Topic not found"
+              }
+
+        409:
+          description: "Conflict. The topic name already exists."
+          schema:
+            type: "object"
+            properties:
+              message:
+                type: "string"
+                example: "Topic name already exists!"
+          examples:
+            application/json:
+              {
+                "message": "Topic name already exists!"
+              }
+
+        401:
+          description: "Unauthorized. Missing or invalid JWT token."
+          schema:
+            type: "object"
+            properties:
+              message:
+                type: "string"
+                example: "Missing or invalid JWT token"
+          examples:
+            application/json:
+              {
+                "message": "Missing or invalid JWT token"
+              }
+
+securityDefinitions:
+  jwtAuth:
+    type: "apiKey"
+    in: "header"
+    name: "Authorization"
+    description: "JWT authentication token"
