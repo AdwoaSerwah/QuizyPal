@@ -8,3 +8,4 @@ main.py
 migrations/
 db_scripts/
 docs/
+config.py
