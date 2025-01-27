@@ -46,16 +46,10 @@ def get_topic_by_id(topic_id: str, storage: Any) -> Optional[dict]:
         dict: A dictionary representing the topic if found.
         None: If the topic is not found.
     """
-    if not topic_id:
-        abort(404, description="Topic ID is required")
-
+    if not isinstance(topic_id, str):
+        abort(400, description='Topic ID must be a string')
     topic = storage.get(Topic, topic_id)
-
-    # If the topic is not found, abort with a 404 error and message "Topic not found".
-    if topic is None:
-        abort(404, description="Topic not found")
-
-    return topic.to_json()
+    return topic
 
 
 def get_topic_by_name_helper(topic_name: str, storage: Any) -> Optional[dict]:
@@ -71,18 +65,20 @@ def get_topic_by_name_helper(topic_name: str, storage: Any) -> Optional[dict]:
         None: If the topic is not found.
     """
     if not topic_name:
-        abort(404, description="Topic name is required")
+        abort(400, description="Topic name is required")
+
+    if not isinstance(topic_name, str):
+        abort(400, description='Topic name must be a string')
+
+    if topic_name.lower() in ["null", "none", ""]:
+        abort(400, description='Topic name must not be null or empty.')
 
     # Format the topic name to match the storage format
     formatted_name = format_text_to_title(topic_name)
     
     # Retrieve the topic by its name
     topic = storage.get_by_value(Topic, "name", formatted_name)
-    
-    if topic is None:
-        abort(404, description="Topic not found")
-
-    return topic.to_json()
+    return topic
 
 
 def add_topic(data: Dict[str, Any], storage: Any) -> tuple:
@@ -98,52 +94,15 @@ def add_topic(data: Dict[str, Any], storage: Any) -> tuple:
     """
     # Convert "null" or "None" strings to None for parent_id
     parent_id = data.get('parent_id')
-    if parent_id and str(parent_id).lower() in ["none", "null"]:
-        data["parent_id"] = None
-        parent_id = None
-
-    # Check for missing required fields
-    if 'name' not in data:
-        return jsonify({'message': 'Missing topic name'}), 400
-    
-    print(f"Parent id: {parent_id}")
     if parent_id is not None:
-        parent = storage.get_by_value(Topic, "parent_id", parent_id)
-        if not parent:
-            abort(404, description="Parent not found")
+        parent_id = validate_parent_id(parent_id, storage)
+    data['parent_id'] = parent_id
     
-    # Validate fields (attempt to convert to string and max length of 128)
-    value = data.get('name')
-    try:
-        # Attempt to convert to string
-        if value:
-            value = str(value)
-            # Check for max length of 128 characters for topic name
-            if len(value) > 128:
-                return jsonify(
-                    {'message': 'Topic name cannot be longer than 128 characters.'}
-                    ), 400
-    except (ValueError, TypeError):
-        return jsonify(
-            {'message': 'Topic name must be a string.'}), 400
-
-    # Update the field with the converted string value
-    if value:
-        formatted_text = format_text_to_title(value)
-        
-        data['name'] = formatted_text
-
-    # Check for max length of 128 characters
-    if parent_id is not None:
-        if len(parent_id) > 60:
-            return jsonify(
-                {'message': 'Parent ID cannot be longer than 128 characters.'}
-                ), 400
-
-    # Check for existing topic name
+    # Validate topic name
     name = data.get('name')
-    if storage.get_by_value(Topic, "name", name):
-        return jsonify({'message': 'Topic name already exists!'}), 400
+    data['name'] = validate_topic_name(name)
+    if storage.get_by_value(Topic, "name", data['name']):
+        abort(400, description=f"Topic name already exists!")
 
     # Create and save topic
     topic_obj = Topic(**data)
@@ -153,3 +112,36 @@ def add_topic(data: Dict[str, Any], storage: Any) -> tuple:
         "message": "Topic added successfully",
         "topic": topic_obj.to_json()
     }), 201
+
+
+def validate_parent_id(parent_id, storage):
+        if not isinstance(parent_id, str):
+            abort(400, description="Parent ID must be a string")
+        if str(parent_id).lower() in ["none", "null", ""]:
+            parent_id = None
+
+        if parent_id is not None:
+            parent = storage.get(Topic, parent_id)
+            if not parent:
+                abort(404, description="Parent not found")
+
+        return parent_id
+
+
+def validate_topic_name(name):
+    if not isinstance(name, str):
+        abort(400, description="Topic name must be a string")
+
+    if not name or name.lower() in {"none", "null", ""}:
+        abort(400, description="Topic name must not be empty or null.")
+    
+    if len(name) > 128:
+        abort(400, description="Topic name cannot be longer than 128 characters.")
+
+    # Update the field with the converted string value
+    formatted_text = format_text_to_title(name)
+
+    # Check for existing topic name
+    if not formatted_text:
+        abort(400, description="Topic name must include alphabets and cannot be 'none' or 'null'.")
+    return formatted_text
