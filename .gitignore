@@ -6,3 +6,5 @@ __pycache__/
 tables
 main.py
 migrations/
+db_scripts/
+docs/

@@ -20,6 +20,7 @@ class UserAnswer(BaseModel, Base):
         quiz_id (str): The ID of the quiz the question belongs to.
         question_id (str): The ID of the question being answered.
         choice_id (str): The ID of the choice selected by the user.
+        result_id (str): The ID of the result for the user
     """
 
     __tablename__ = 'user_answers'

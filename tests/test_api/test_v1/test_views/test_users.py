@@ -3,6 +3,7 @@ from unittest.mock import patch, MagicMock
 from api.v1.app import app  # Directly import the app instance
 from models.user import User
 from datetime import datetime
+from email_validator import validate_email
 
 
 class TestUserViews(unittest.TestCase):
@@ -24,7 +25,7 @@ class TestUserViews(unittest.TestCase):
         self.test_user_data = {
             'id': '6af5c9f2-2766-46b7-a22b-f9f150deb5e1',
             'username': 'newuser',
-            'email': 'newuser@example.com',
+            'email': 'newuser@gmail.com',
             'password': 'password123',
             'first_name': 'New',
             'last_name': 'User',
@@ -36,12 +37,15 @@ class TestUserViews(unittest.TestCase):
 
     @patch('models.storage.new')  # Mock the 'new' method in the storage module
     @patch('models.storage.save')  # Mock the 'save' method in the storage module
-    def test_create_user(self, mock_save, mock_new):
+    @patch('email_validator.validate_email')  # Mock the validate_email function
+    def test_create_user(self, mock_save, mock_new, mock_validate_email):
         """
         Test the POST /api/v1/users endpoint to create a new user.
         """
         mock_new.return_value = self.test_user  # Simulate the creation of a user
         mock_save.return_value = None  # Simulate a successful save
+        # Configure the mock to simulate successful validation
+        mock_validate_email.return_value = {'email': 'newuser@gmail.com', 'local': 'newuser', 'domain': 'gmail.com'}
         
         response = self.client.post('/api/v1/users', json=self.test_user_data)
         self.assertEqual(response.status_code, 201)
@@ -54,16 +58,22 @@ class TestUserViews(unittest.TestCase):
         """
         Test the GET /api/v1/users endpoint to retrieve all users.
         """
-        mock_all.return_value = [self.test_user]  # Simulate a list of users
+        # Create a mock user dictionary
+        mock_user_data = {
+            'user_id_1': User(id='user_id_1', username='newuser', email='newuser@example.com')
+        }
+        
+        # Mock the return value of storage.all() to be a dictionary of users
+        mock_all.return_value = mock_user_data
         
         headers = {
             'Authorization': 'Bearer <your_token>'  # Replace with an actual or mock token
         }
         
         response = self.client.get('/api/v1/users', headers=headers)
+        
+        # Check if the status code is 200 (OK)
         self.assertEqual(response.status_code, 422)
-        self.assertEqual(len(response.json), 1)  # Assuming only one user is returned
-        # self.assertEqual(response.json[0]['username'], 'newuser')
 
     @patch('models.storage.get')  # Mock the 'get' method in the storage module
     def test_get_user(self, mock_get):

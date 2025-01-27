@@ -5,11 +5,12 @@ This class interacts with the database via SQLAlchemy for data persistence.
 """
 
 from models.base_model import BaseModel, Base
-from decimal import Decimal
-from sqlalchemy import Column, String, Integer, ForeignKey, Enum, DECIMAL, DateTime, Index
+# from decimal import Decimal
+from sqlalchemy import Column, Float, String, Integer, ForeignKey, Enum, DateTime, Index
 from sqlalchemy.orm import relationship
 from enum import Enum as PyEnum  # Importing Python's Enum class
 from datetime import datetime, timezone  # Missing imports
+
 
 
 class QuizSessionStatus(PyEnum):
@@ -19,6 +20,22 @@ class QuizSessionStatus(PyEnum):
     IN_PROGRESS = "in-progress"
     COMPLETED = "completed"
     TIMED_OUT = "timed-out"
+
+    @classmethod
+    def from_str(cls, status_str: str) -> 'QuizSessionStatus':
+        """
+        Convert a string to a Role enum member.
+
+        Args:
+            role_str (str): The string representation of the role.
+
+        Returns:
+            Role: Corresponding Role enum member.
+        """
+        for status in cls:
+            if status.value == status_str.lower():
+                return status
+        raise ValueError(f"Invalid role: {status_str}. Must be one of {[s.value for s in cls]}")
 
 
 class Result(BaseModel, Base):
@@ -44,7 +61,8 @@ class Result(BaseModel, Base):
     quiz_id: str = Column(String(60), ForeignKey('quizzes.id'), nullable=False)
 
     # Fields related to the result
-    score: Decimal = Column(DECIMAL(5, 2), nullable=False, default=Decimal('0.00'))
+    score: float = Column(Float, nullable=False, default=0.00)
+    # score: Decimal = Column(DECIMAL(5, 2), nullable=False, default=Decimal('0.00'))
     time_taken: int = Column(Integer, nullable=False, default=0)  # Initially set to 0
     status: str = Column(Enum(QuizSessionStatus), nullable=False, default=QuizSessionStatus.IN_PROGRESS)  # Enum for status
     submitted_at: datetime = Column(DateTime, nullable=True, default=lambda: datetime.now(timezone.utc))  # Standardized timestamp
@@ -68,18 +86,31 @@ class Result(BaseModel, Base):
         """
         super().__init__(*args, **kwargs)
 
-    def get_attempt_number(self, user_id: str, quiz_id: str) -> int:
+    @classmethod
+    def get_attempt_number(cls, storage, user_id: str, quiz_id: str, filter_by_date: bool = False) -> int:
         """
         Counts the number of attempts a user has made for a specific quiz.
 
         Args:
+            storage (Storage): The storage instance to interact with the database.
             user_id (str): The ID of the user.
             quiz_id (str): The ID of the quiz.
+            filter_by_date (bool): If True, count only today's attempts (default is False for total attempts).
 
         Returns:
             int: The number of attempts the user has made for the quiz.
         """
-        return Result.query.filter_by(user_id=user_id, quiz_id=quiz_id).count()
+        # Fetch all results for the user and quiz
+        results = storage.filter_by(cls, user_id=user_id, quiz_id=quiz_id)
+
+        if filter_by_date:
+            # Get today's date (UTC)
+            today_date = datetime.now(timezone.utc).date()
+            # Filter manually for today's attempts
+            results = [result for result in results if result.start_time.date() == today_date]
+
+        # Return the count of filtered results
+        return len(results)
 
     def __str__(self) -> str:
         """

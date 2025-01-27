@@ -2,7 +2,8 @@ import unittest
 from unittest.mock import patch, MagicMock
 from flask import Flask
 from flask_jwt_extended import create_access_token, JWTManager
-from api.v1.views.auth import login, logout, refresh_token, forgot_password, reset_password
+from api.v1.views.auth import login, logout, forgot_password, reset_password
+from api.v1.views.refresh_tokens import refresh_token
 
 class TestAuthViews(unittest.TestCase):
     @classmethod

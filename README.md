@@ -9,8 +9,6 @@ This project is deployed [here](https://adwoask.pythonanywhere.com/), and you ca
 **Project timeline:** August 2, 2024 – September 24, 2024  
 **Author:** [Adwoa Serwah](https://www.linkedin.com/in/adwoa-kyei-baffour-892490192)
 
-Take-A-Bite was created with the goal of simplifying the online food ordering experience, particularly for users in Accra, Ghana. It provides users with a seamless way to select food, customize their order, and complete payments. 
-
 I worked on both the backend and frontend, focusing on delivering a robust and user-friendly experience. My role involved:
 - Building and managing database models using SQLAlchemy
 - Developing Flask routes for data handling and payment processing

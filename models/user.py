@@ -88,9 +88,11 @@ class User(BaseModel, Base):
             value (str): The value being assigned to the attribute.
         """
         if name == "password":
-            # Encrypt the password using bcrypt
-            salt = gensalt()
-            value = hashpw(value.encode('utf-8'), salt).decode('utf-8')
+            # Check if the value is already hashed
+            if not value.startswith("$2b$"):
+                # Encrypt the password using bcrypt
+                salt = gensalt()
+                value = hashpw(value.encode('utf-8'), salt).decode('utf-8')
 
         # Call the parent class's __setattr__ method to store the value
         super().__setattr__(name, value)
