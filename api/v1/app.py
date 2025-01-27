@@ -3,7 +3,7 @@
 Route module for the API
 """
 
-from flask import Flask, jsonify, redirect
+from flask import Flask, jsonify
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
@@ -86,7 +86,7 @@ def close_db(error):
 
 # Error Handlers
 @app.errorhandler(404)
-def not_found(error) -> str:
+def not_found_error(error) -> str:
     """
     Handles 404 Not Found errors.
 
@@ -129,11 +129,56 @@ def forbidden_error(error) -> str:
     message = getattr(error, "description", "Forbidden")
     return jsonify({"error": message}), 403
 
-# Swagger setup
-# app.config['SWAGGER_UI_JSONEDITOR'] = True  # This allows you to edit the API documentation
-app.config['SWAGGER'] = {'title': 'QuizyPal Restful API', 'uiversion': 2}
-Swagger(app)
 
+@app.errorhandler(400)
+def bad_request_error(error) -> str:
+    """
+    Handles 400 Bad Request errors.
+
+    Args:
+        error: The error object.
+
+    Returns:
+        A JSON response with the error message and a 400 status code.
+    """
+    message = getattr(error, "description", "Bad Request")
+    return jsonify({"error": message}), 400
+
+
+@app.errorhandler(405)
+def method_not_allowed_error(error) -> str:
+    """
+    Handles 405 Method Not Allowed errors.
+
+    Args:
+        error: The error object.
+
+    Returns:
+        A JSON response with the error message and a 405 status code.
+    """
+    message = getattr(error, "description", "Method Not Allowed")
+    return jsonify({"error": message}), 405
+
+
+@app.errorhandler(500)
+def internal_server_error(error) -> str:
+    """
+    Handles 500 Internal Server Error errors.
+
+    Args:
+        error: The error object.
+
+    Returns:
+        A JSON response with the error message and a 500 status code.
+    """
+    message = getattr(error, "description", "Internal Server Error")
+    return jsonify({"error": message}), 500
+
+
+
+# Swagger setup
+app.config['SWAGGER'] = {'title': 'QuizyPal Restful API', 'uiversion': 1}
+Swagger(app)
 
 if __name__ == "__main__":
     host = getenv("API_HOST", "0.0.0.0")
