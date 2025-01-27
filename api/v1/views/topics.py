@@ -2,18 +2,19 @@
 from api.v1.views import app_views
 from flask import abort, jsonify, request
 from models.topic import Topic
+from models.quiz import Quiz
 from models import storage
-from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt, verify_jwt_in_request
-from flasgger.utils import swag_from
+from flask_jwt_extended import jwt_required
 from api.v1.services.auth_service import admin_required
-from api.v1.utils.string_utils import format_text_to_title
-from api.v1.services.topic_service import add_topic, get_all_topics, get_topic_by_name_helper, get_topic_by_id
+from api.v1.utils.pagination_utils import get_paginated_data
+from api.v1.services.topic_service import add_topic, get_topic_by_name_helper, get_topic_by_id, validate_parent_id, validate_topic_name
+from datetime import datetime, timezone
+from flask.typing import ResponseReturnValue
+from typing import List, Dict
 
 
 @app_views.route('/topics', methods=['GET'], strict_slashes=False)
-@jwt_required()
-@swag_from('documentation/topic/get_topics.yml')
-def get_topics() -> str:
+def get_topics() -> ResponseReturnValue:
     """
     GET /api/v1/topics
 
@@ -25,15 +26,29 @@ def get_topics() -> str:
         A JSON array containing all topic objects.
         If no topics are found, it returns an empty list.
     """
-    # Using the helper function here
-    all_topics = get_all_topics(storage)
-    return jsonify(all_topics)
+    # Get query parameters with defaults and validate
+    try:
+        # Convert query parameters to integers with defaults
+        page = int(request.args.get('page', 1))  # Default page is 1
+        page_size = int(request.args.get('page_size', 10))  # Default page_size is 10
+
+        # Ensure both values are positive integers
+        if page <= 0 or page_size <= 0:
+            raise ValueError
+
+    except (ValueError, TypeError):
+        abort(400, description="page and page_size must be positive integers")
+
+    # Use the helper function to get paginated quizzes
+    result = get_paginated_data(storage, Topic, page=page, page_size=page_size)
+
+    # Change the "data" key to "quizzes"
+    result["topics"] = result.pop("data")
+    return jsonify(result)
 
 
 @app_views.route('/topics/<topic_id>', methods=['GET'], strict_slashes=False)
-@jwt_required()
-@swag_from('documentation/topic/get_topic.yml', methods=['GET'])
-def get_topic(topic_id: str = None) -> str:
+def get_topic(topic_id: str = None) -> ResponseReturnValue:
     """
     GET /api/v1/topics/:id
 
@@ -47,21 +62,24 @@ def get_topic(topic_id: str = None) -> str:
         A JSON object representing the topic if found.
         If the topic is not found, returns a 404 error.
     """
-    # Check if topic_id is provided. If not, return 404 with a relevant message.
-    if topic_id is None:
-        abort(404, description="Topic ID is required")
-
     # Call the helper function `get_topic_by_id` to retrieve the topic by its ID.
     topic = get_topic_by_id(topic_id, storage)
 
+    # If the topic is not found, abort with a 404 error and message "Topic not found".
+    if topic is None:
+        abort(404, description="Topic not found")
     # If the topic is found, return it as a JSON object.
-    return jsonify(topic)
+    return jsonify(topic.to_json())
+
+
+@app_views.route('/topics/name', methods=['GET'], strict_slashes=False)
+def handle_no_name() -> ResponseReturnValue:
+    """Error handler for /topics/name route"""
+    abort(400, description="Topic name is required")
 
 
 @app_views.route('/topics/name/<topic_name>', methods=['GET'], strict_slashes=False)
-@jwt_required()
-@swag_from('documentation/topic/get_topic_by_name.yml', methods=['GET'])
-def get_topic_by_name(topic_name: str = None) -> str:
+def get_topic_by_name(topic_name: str = None) -> ResponseReturnValue:
     """
     GET /api/v1/topics/:topic_name
 
@@ -75,20 +93,78 @@ def get_topic_by_name(topic_name: str = None) -> str:
         A JSON object representing the topic if found.
         If the topic is not found, returns a 404 error.
     """
-    if not topic_name:
-        abort(404, description="Topic name is required")
-
     # Call the helper function to get the topic by name
     topic = get_topic_by_name_helper(topic_name, storage)
 
-    return jsonify(topic)
+    if topic is None:
+        abort(404, description="Topic not found")
+
+    return jsonify(topic.to_json())
+
+
+# @app_views.route('/quizzes/topic', methods=['GET'], strict_slashes=False)
+# def handle_no_topic_id() -> ResponseReturnValue:
+#    """Handles no topic_id error"""
+#    abort(400, description="Topic ID is required")
+
+
+@app_views.route('/topics/<topic_id>/quizzes', methods=['GET'], strict_slashes=False)
+def get_topic_quizzes(topic_id: str = None) -> ResponseReturnValue:
+    """
+    GET /api/v1/quizzes/topic/<topic_id>
+
+    Retrieve all quizzes associated with a specific topic, grouped by the topic
+    and its subtopics. Only subtopics with quizzes are included.
+    """
+    # Check if the topic exists
+    if not topic_id:
+        abort(400, description="Topic ID is required")
+    topic = get_topic_by_id(topic_id, storage)
+    if not topic:
+        abort(404, description="Topic not found")
+
+    def fetch_quizzes_by_topic(topic: Topic) -> List[Dict]:
+        """
+        Recursively fetch quizzes grouped by the topic and its subtopics,
+        filtering out topics or subtopics without quizzes.
+        """
+        # Fetch quizzes for the current topic
+        topic_quizzes = storage.get_by_value(Quiz, 'topic_id', topic.id)
+        quizzes = []
+        if topic_quizzes:
+            if isinstance(topic_quizzes, Quiz):
+                topic_quizzes = [topic_quizzes]
+            quizzes = [quiz.to_json() for quiz in topic_quizzes]
+
+        # Recursively fetch subtopics with quizzes
+        subtopic_data = []
+        for subtopic in topic.subtopics:
+            subtopic_quizzes = fetch_quizzes_by_topic(subtopic)
+            if subtopic_quizzes:  # Include only if subtopic has quizzes
+                subtopic_data.append(subtopic_quizzes)
+
+        # Include current topic only if it has quizzes or subtopics with quizzes
+        if quizzes or subtopic_data:
+            return {topic.name: quizzes + subtopic_data}
+
+        return None  # Exclude topics without quizzes
+
+    # Fetch quizzes grouped by topics and subtopics
+    all_quizzes_grouped = fetch_quizzes_by_topic(topic)
+
+    # Ensure the response starts with the root topic as the key
+    if not all_quizzes_grouped:
+        return jsonify({topic.name: []}), 200
+
+    response = {topic.name: all_quizzes_grouped[topic.name]}
+
+    return jsonify(response), 200
 
 
 @app_views.route('/topics/<topic_id>', methods=['DELETE'], strict_slashes=False)
 @jwt_required()
 @admin_required
-@swag_from('documentation/topic/delete_topic.yml', methods=['DELETE'])
-def delete_topic(topic_id: str = None) -> str:
+def delete_topic(topic_id: str = None) -> ResponseReturnValue:
     """
     DELETE /api/v1/topics/:id
 
@@ -102,10 +178,8 @@ def delete_topic(topic_id: str = None) -> str:
         A JSON response indicating whether the deletion was successful.
         If the topic does not exist or the current topic is unauthorized, it returns an error.
     """
-    if topic_id is None:
-        abort(404, description="Topic ID is required")
-
-    topic = storage.get(Topic, topic_id)
+    topic = get_topic_by_id(topic_id, storage)
+    # If the topic is not found, abort with a 404 error and message "Topic not found".
     if topic is None:
         abort(404, description="Topic not found")
 
@@ -119,8 +193,7 @@ def delete_topic(topic_id: str = None) -> str:
 @app_views.route('/topics', methods=['POST'], strict_slashes=False)
 @jwt_required()
 @admin_required
-@swag_from('documentation/topic/create_topic.yml', methods=['POST'])
-def create_topic() -> str:
+def create_topic() -> ResponseReturnValue:
     """ 
     POST /api/v1/topics/
 
@@ -137,7 +210,7 @@ def create_topic() -> str:
     """
     # Ensure request data is JSON
     if not request.get_json():
-        return jsonify({'message': 'No data provided!'}), 400
+        abort(400, description="No JSON data provided in the request!")
 
     data = request.get_json()
 
@@ -148,8 +221,7 @@ def create_topic() -> str:
 @app_views.route('/topics/<topic_id>', methods=['PUT'], strict_slashes=False)
 @jwt_required()
 @admin_required
-@swag_from('documentation/topic/update_topic.yml', methods=['PUT'])
-def update_topic(topic_id: str) -> str:
+def update_topic(topic_id: str = None) -> ResponseReturnValue:
     """ 
     PUT /api/v1/topics/:id
 
@@ -167,66 +239,48 @@ def update_topic(topic_id: str) -> str:
     """
     # Ensure request data is JSON
     if not request.get_json():
-        return jsonify({'message': 'No data provided!'}), 400
+        abort(400, description="No JSON data provided in the request!")
 
     data = request.get_json()
 
-    # Convert "null" or "None" strings to None for parent_id
-    parent_id = data.get('parent_id')
-    if parent_id and str(parent_id).lower() in ["none", "null"]:
-        data["parent_id"] = None
-        parent_id = None
+    topic = get_topic_by_id(topic_id, storage)
 
-    # Check if the topic exists
-    topic = storage.get(Topic, topic_id)
     if topic is None:
         abort(404, description="Topic not found")
 
-    if parent_id is not None:
-        parent = storage.get_by_value(Topic, "parent_id", parent_id)
-        if not parent:
-            abort(404, description="Parent not found")
-    
-    # Validate fields (attempt to convert to string and max length of 128)
-    value = data.get('name')
-    try:
-        # Attempt to convert to string
-        if value:
-            value = str(value)
-            # Check for max length of 128 characters for topic name
-            if len(value) > 128:
-                return jsonify(
-                    {'message': 'Topic name cannot be longer than 128 characters.'}
-                    ), 400
-    except (ValueError, TypeError):
-        return jsonify(
-            {'message': 'Topic name must be a string.'}), 400
+    # Convert "null" or "None" strings to None for parent_id
+    if 'parent_id' in data:
+        parent_id = data.get('parent_id')
+        if parent_id is not None:
+            parent_id = validate_parent_id(parent_id, storage)
+        data['parent_id'] = parent_id
 
-    # Update the field with the converted string value
-    if value:
-        formatted_text = format_text_to_title(value)
-        
-        data['name'] = formatted_text
+    # Validate topic name
+    if 'name' in data:
+        name = data.get('name')
+        data['name'] = validate_topic_name(name)
+        if data['name'] != topic.name and storage.get_by_value(Topic, "name", data['name']):
+            abort(400, description="Topic name already exists!")
 
-    # Check for max length of 128 characters
-    if parent_id is not None:
-        if len(parent_id) > 60:
-            return jsonify(
-                {'message': 'Parent ID cannot be longer than 128 characters.'}
-                ), 400
-
-    # Check for existing topic name
-    name = data.get('name')
-    if storage.get_by_value(Topic, "name", name):
-        return jsonify({'message': 'Topic name already exists!'}), 400
 
     # Update the topic object with new data
+    updated = False
+    
     for key, value in data.items():
-        setattr(topic, key, value)
+        if key in ['parent_id', 'name']:
+            if value == getattr(topic, key):
+                continue
+            setattr(topic, key, value)
+            updated = True
 
-    topic.save()
-
+    if not updated:
+        message = "No changes made to the topic"
+    else:
+        message = "Topic updated successfully"
+        topic.updated_at = datetime.now(timezone.utc)
+        topic.save()
+    
     return jsonify({
-        "message": "Topic updated successfully",
+        "message": message,
         "topic": topic.to_json()
     }), 200
