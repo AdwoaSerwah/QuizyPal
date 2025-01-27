@@ -31,4 +31,4 @@ ENV FLASK_APP=api/v1/app.py
 ENV FLASK_ENV=development
 
 # Run the Flask app using Gunicorn
-CMD ["gunicorn", "--workers", "1", "--bind", "0.0.0.0:5000", "api.v1.app:app"]
+CMD ["gunicorn", "--workers", "4", "--bind", "0.0.0.0:5000", "api.v1.app:app"]

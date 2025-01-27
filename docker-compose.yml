@@ -19,7 +19,7 @@ services:
       - db
       - redis  # Make sure the app waits for Redis to be ready
       - celery  # Wait for the Celery worker to be ready
-    command: ["./wait-for-it.sh", "quizypal_db:3306", "--", "./wait-for-it.sh", "quizypal_redis:6379", "--", "gunicorn", "--workers", "1", "--bind", "0.0.0.0:5000", "api.v1.app:app"]
+    command: ["./wait-for-it.sh", "quizypal_db:3306", "--", "./wait-for-it.sh", "quizypal_redis:6379", "--", "gunicorn", "--workers", "4", "--bind", "0.0.0.0:5000", "api.v1.app:app"]
 
   db:
     image: mysql:5.7
