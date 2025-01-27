@@ -4,6 +4,7 @@ from flask_mail import Message
 from flask import url_for
 from config import mail
 
+
 def send_password_reset_email(user_email, reset_token):
     """Sends a password reset email to the user."""
     msg = Message('Password Reset Request',
