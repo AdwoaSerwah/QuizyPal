@@ -27,7 +27,7 @@ class Question(BaseModel, Base):
     __tablename__ = 'questions'
 
     quiz_id: str = Column(String(60), ForeignKey('quizzes.id'), nullable=False)
-    question_text: str = Column(String(255), nullable=False)
+    question_text: str = Column(String(255, collation='utf8mb4_general_ci'), nullable=False)
     order_number: int = Column(Integer, nullable=False)
     allow_multiple_answers: bool = Column(Boolean, default=False, nullable=False)
 
@@ -63,3 +63,25 @@ class Question(BaseModel, Base):
         return (f"Question(id={self.id}, quiz_id={self.quiz_id}, question_text={self.question_text}, "
                 f"allow_multiple_answers={self.allow_multiple_answers}, created_at={self.created_at}, "
                 f"updated_at={self.updated_at})")
+    
+    @classmethod
+    def get_next_order_number(cls, storage, quiz_id):
+        """
+        Returns the next order number for questions in a specific quiz.
+
+        Args:
+            storage: The storage engine instance to query data.
+            quiz_id (str): The ID of the quiz to get the next order number for.
+
+        Returns:
+            int: The next order number.
+        """
+        # Retrieve all questions for the quiz
+        data = storage.get_by_value(cls, 'quiz_id', quiz_id)
+
+        # Normalize the data into a list
+        if not isinstance(data, list):  # Single object or None
+            data = [data] if data else []
+
+        # Determine the next order number
+        return len(data) + 1

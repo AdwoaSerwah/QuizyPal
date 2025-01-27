@@ -29,7 +29,8 @@ class Topic(BaseModel, Base):
     parent_id: Optional[str] = Column(
         String(60), 
         ForeignKey('topics.id', ondelete='CASCADE'), 
-        nullable=True
+        nullable=True,
+        default=None
     )
 
     # Relationship to self to represent parent-child relationship

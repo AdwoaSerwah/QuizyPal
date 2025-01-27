@@ -26,7 +26,7 @@ class Choice(BaseModel, Base):
     __tablename__ = 'choices'
 
     question_id: str = Column(String(60), ForeignKey('questions.id'), nullable=False, index=True)
-    choice_text: str = Column(String(255), nullable=False, default="no_answer")
+    choice_text: str = Column(String(255, collation='utf8mb4_general_ci'), nullable=False, default="no_answer")
     is_correct: bool = Column(Boolean, nullable=False, default=False)
     order_number: int = Column(Integer, nullable=False)  # New field
 
@@ -56,3 +56,24 @@ class Choice(BaseModel, Base):
         """
         return (f"Choice(id={self.id}, question_id={self.question_id}, choice_text={self.choice_text}, "
                 f"is_correct={self.is_correct}, created_at={self.created_at}, updated_at={self.updated_at})")
+
+    @classmethod
+    def get_next_order_number(cls, storage, question_id):
+        """
+        Returns the next order number for choices in a specific question.
+
+        Args:
+            storage: The storage engine instance to query data.
+            question_id (str): The ID of the question to get the next order number for.
+
+        Returns:
+            int: The next order number.
+        """
+        data = storage.get_by_value(cls, 'question_id', question_id)
+
+        # Normalize the data into a list
+        if not isinstance(data, list):  # Single object or None
+            data = [data] if data else []
+
+        # Determine the next order number
+        return len(data) + 1

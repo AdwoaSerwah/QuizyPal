@@ -21,7 +21,6 @@ class RefreshToken(BaseModel, Base):
         token (str): The unique token string.
         user_id (str): Foreign key linking the token to a specific user.
         expires_at (datetime): The expiration time of the token.
-        device_id (str): Unique identifier for the device associated with the token.
     """
 
     __tablename__ = 'refresh_tokens'
@@ -66,7 +65,7 @@ class RefreshToken(BaseModel, Base):
         """
         return secrets.token_urlsafe(16)  # Generate a secure, random device ID
 
-    def is_expired(self) -> bool:
+    def has_expired(self) -> bool:
         """
         Checks if the refresh token has expired.
 

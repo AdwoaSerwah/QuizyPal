@@ -125,7 +125,7 @@ class BaseModel():
         for key, value in self.__dict__.items():
             if not for_serialization:
                 if (
-                    key in ['password', 'reset_token', 'token_expiry']
+                    key in ['password', 'reset_token', 'token_expiry', 'is_correct']
                     or (key == 'choice_text' and value == 'no_answer')
                     or key[0] == '_'
                     ):  # noqa
@@ -133,6 +133,8 @@ class BaseModel():
 
             if key == '_sa_instance_state':
                 continue
+            if key == "time_limit":
+                key = "time_limit (in mins)"
             if type(value) is datetime:
                 result[key] = value.strftime(time_format)
             elif isinstance(value, Enum):  # Check for enum and convert to string
