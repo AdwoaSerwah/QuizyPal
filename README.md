@@ -35,8 +35,10 @@ QuizyPal is an interactive quiz application designed to provide an engaging plat
 - **Database**: MySQL
 - **Authentication**: JWT tokens
 
-## API Documentation
+## API Documentation:
 
+For more detailed documentation and further tests, visit my postman collection [here](https://www.postman.com/research-geoscientist-64388512/my-workspace/collection/40764868-5a04296f-1ad7-45c7-8f32-69141777f7be?action=share&creator=40764868&active-environment=40764868-0a1a0347-6843-48c3-a938-74598e18dd24
+)
 The backend of QuizyPal exposes a set of RESTful APIs for interacting with the platform. Key endpoints include:
 
 ### User Authentication
