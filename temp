@@ -1,0 +1,455 @@
+[
+    {
+        "allow_multiple_answers": true,
+        "choices": [
+            {
+                "choice_text": "Law of Inertia",
+                "created_at": "2025-01-27T15:59:43.000000",
+                "id": "9cf68934-62e5-4cc6-85a7-ff3aff975b3a",
+                "order_number": 2,
+                "question_id": "9e182850-6fd6-4700-a87d-466f0caa090c",
+                "updated_at": "2025-01-27T15:59:43.000000"
+            },
+            {
+                "choice_text": "Law of Acceleration",
+                "created_at": "2025-01-27T15:59:43.000000",
+                "id": "17881054-bf0a-428b-8744-49f077d70433",
+                "order_number": 3,
+                "question_id": "9e182850-6fd6-4700-a87d-466f0caa090c",
+                "updated_at": "2025-01-27T15:59:43.000000"
+            },
+            {
+                "choice_text": "Law of Action and Reaction",
+                "created_at": "2025-01-27T15:59:43.000000",
+                "id": "3c060d28-b91b-4135-a375-77d38ec716c4",
+                "order_number": 4,
+                "question_id": "9e182850-6fd6-4700-a87d-466f0caa090c",
+                "updated_at": "2025-01-27T15:59:43.000000"
+            }
+        ],
+        "created_at": "2025-01-27T15:59:43.000000",
+        "id": "9e182850-6fd6-4700-a87d-466f0caa090c",
+        "order_number": 1,
+        "question_text": "Which law(s) describe(s) motion?",
+        "quiz_id": "4ca1b0ce-cada-4675-8376-a0a215c95bf4",
+        "updated_at": "2025-01-27T15:59:43.000000"
+    },
+    {
+        "allow_multiple_answers": false,
+        "choices": [
+            {
+                "choice_text": "F = ma",
+                "created_at": "2025-01-27T15:59:43.000000",
+                "id": "15bb84c1-3b7c-4b23-8ef7-6d577171eb10",
+                "order_number": 2,
+                "question_id": "c8adfae7-4667-42c6-b47d-30cf75b76031",
+                "updated_at": "2025-01-27T15:59:43.000000"
+            },
+            {
+                "choice_text": "F = mv",
+                "created_at": "2025-01-27T15:59:43.000000",
+                "id": "65560a7b-de39-49d0-814e-f3d4af793dc2",
+                "order_number": 3,
+                "question_id": "c8adfae7-4667-42c6-b47d-30cf75b76031",
+                "updated_at": "2025-01-27T15:59:43.000000"
+            },
+            {
+                "choice_text": "F = m/a",
+                "created_at": "2025-01-27T15:59:43.000000",
+                "id": "47bd7913-b346-489a-b160-5d705d551ce2",
+                "order_number": 4,
+                "question_id": "c8adfae7-4667-42c6-b47d-30cf75b76031",
+                "updated_at": "2025-01-27T15:59:43.000000"
+            }
+        ],
+        "created_at": "2025-01-27T15:59:43.000000",
+        "id": "c8adfae7-4667-42c6-b47d-30cf75b76031",
+        "order_number": 2,
+        "question_text": "What is the formula to calculate force?",
+        "quiz_id": "4ca1b0ce-cada-4675-8376-a0a215c95bf4",
+        "updated_at": "2025-01-27T15:59:43.000000"
+    },
+    {
+        "allow_multiple_answers": true,
+        "choices": [
+            {
+                "choice_text": "Force",
+                "created_at": "2025-01-27T15:59:43.000000",
+                "id": "388c6db3-8bda-4390-a98d-402829b11ff2",
+                "order_number": 2,
+                "question_id": "e0009f6e-a6f0-47e3-b6d6-043ac3fff1eb",
+                "updated_at": "2025-01-27T15:59:43.000000"
+            },
+            {
+                "choice_text": "Velocity",
+                "created_at": "2025-01-27T15:59:43.000000",
+                "id": "a5d53cc9-097f-434d-89a4-40863afcf54f",
+                "order_number": 3,
+                "question_id": "e0009f6e-a6f0-47e3-b6d6-043ac3fff1eb",
+                "updated_at": "2025-01-27T15:59:43.000000"
+            },
+            {
+                "choice_text": "Mass",
+                "created_at": "2025-01-27T15:59:43.000000",
+                "id": "0d761751-0c3c-4300-97bd-814bc0590955",
+                "order_number": 4,
+                "question_id": "e0009f6e-a6f0-47e3-b6d6-043ac3fff1eb",
+                "updated_at": "2025-01-27T15:59:43.000000"
+            }
+        ],
+        "created_at": "2025-01-27T15:59:43.000000",
+        "id": "e0009f6e-a6f0-47e3-b6d6-043ac3fff1eb",
+        "order_number": 3,
+        "question_text": "Which quantity(ies) involve(s) direction?",
+        "quiz_id": "4ca1b0ce-cada-4675-8376-a0a215c95bf4",
+        "updated_at": "2025-01-27T15:59:43.000000"
+    },
+    {
+        "allow_multiple_answers": false,
+        "choices": [
+            {
+                "choice_text": "Newton",
+                "created_at": "2025-01-27T15:59:43.000000",
+                "id": "602379cf-f8e4-4223-9e00-7f982f9251b8",
+                "order_number": 2,
+                "question_id": "2f4593fd-050c-47e0-8515-21ae6e806673",
+                "updated_at": "2025-01-27T15:59:43.000000"
+            },
+            {
+                "choice_text": "Joule",
+                "created_at": "2025-01-27T15:59:43.000000",
+                "id": "6805bcf4-b3fa-4152-9d80-ba834289c134",
+                "order_number": 3,
+                "question_id": "2f4593fd-050c-47e0-8515-21ae6e806673",
+                "updated_at": "2025-01-27T15:59:43.000000"
+            },
+            {
+                "choice_text": "Pascal",
+                "created_at": "2025-01-27T15:59:43.000000",
+                "id": "c2404421-2e7b-43fa-9e84-0c1c813b0c17",
+                "order_number": 4,
+                "question_id": "2f4593fd-050c-47e0-8515-21ae6e806673",
+                "updated_at": "2025-01-27T15:59:43.000000"
+            }
+        ],
+        "created_at": "2025-01-27T15:59:43.000000",
+        "id": "2f4593fd-050c-47e0-8515-21ae6e806673",
+        "order_number": 4,
+        "question_text": "What is the unit used to measure force in the si system?",
+        "quiz_id": "4ca1b0ce-cada-4675-8376-a0a215c95bf4",
+        "updated_at": "2025-01-27T15:59:43.000000"
+    },
+    {
+        "allow_multiple_answers": true,
+        "choices": [
+            {
+                "choice_text": "Energy cannot be created or destroyed.",
+                "created_at": "2025-01-27T15:59:43.000000",
+                "id": "c9aedb84-e499-4362-a4a5-bf6ba7ffbb0c",
+                "order_number": 2,
+                "question_id": "144e301e-57fb-4465-b400-4ca2e450bfd1",
+                "updated_at": "2025-01-27T15:59:43.000000"
+            },
+            {
+                "choice_text": "Energy transforms from one form to another.",
+                "created_at": "2025-01-27T15:59:43.000000",
+                "id": "8f09e63c-e5f1-40c0-883d-b969be6ffa0c",
+                "order_number": 3,
+                "question_id": "144e301e-57fb-4465-b400-4ca2e450bfd1",
+                "updated_at": "2025-01-27T15:59:43.000000"
+            },
+            {
+                "choice_text": "Energy remains constant in an open system.",
+                "created_at": "2025-01-27T15:59:43.000000",
+                "id": "cc7546a0-64c0-4e75-8ce5-dae80d42b9bc",
+                "order_number": 4,
+                "question_id": "144e301e-57fb-4465-b400-4ca2e450bfd1",
+                "updated_at": "2025-01-27T15:59:43.000000"
+            }
+        ],
+        "created_at": "2025-01-27T15:59:43.000000",
+        "id": "144e301e-57fb-4465-b400-4ca2e450bfd1",
+        "order_number": 5,
+        "question_text": "What is/are the principle(s) of energy conservation?",
+        "quiz_id": "4ca1b0ce-cada-4675-8376-a0a215c95bf4",
+        "updated_at": "2025-01-27T15:59:43.000000"
+    },
+    {
+        "allow_multiple_answers": false,
+        "choices": [
+            {
+                "choice_text": "9.8 m/s²",
+                "created_at": "2025-01-27T15:59:43.000000",
+                "id": "c213ce0b-0393-4f1e-8bef-4f8f55aab0c1",
+                "order_number": 2,
+                "question_id": "220b7ebf-4c68-453b-81f3-ae2050164c6f",
+                "updated_at": "2025-01-27T15:59:43.000000"
+            },
+            {
+                "choice_text": "10 m/s²",
+                "created_at": "2025-01-27T15:59:43.000000",
+                "id": "8d53b977-a15e-4098-9389-a42a59f6df27",
+                "order_number": 3,
+                "question_id": "220b7ebf-4c68-453b-81f3-ae2050164c6f",
+                "updated_at": "2025-01-27T15:59:43.000000"
+            },
+            {
+                "choice_text": "8.9 m/s²",
+                "created_at": "2025-01-27T15:59:43.000000",
+                "id": "5f3b6f07-19e0-441c-9c9b-5e2db3fe6760",
+                "order_number": 4,
+                "question_id": "220b7ebf-4c68-453b-81f3-ae2050164c6f",
+                "updated_at": "2025-01-27T15:59:43.000000"
+            }
+        ],
+        "created_at": "2025-01-27T15:59:43.000000",
+        "id": "220b7ebf-4c68-453b-81f3-ae2050164c6f",
+        "order_number": 6,
+        "question_text": "What is earth's acceleration due to gravity?",
+        "quiz_id": "4ca1b0ce-cada-4675-8376-a0a215c95bf4",
+        "updated_at": "2025-01-27T15:59:43.000000"
+    },
+    {
+        "allow_multiple_answers": true,
+        "choices": [
+            {
+                "choice_text": "Water stored in a dam",
+                "created_at": "2025-01-27T15:59:43.000000",
+                "id": "f2228417-ee00-4a02-81d9-29b972a1b580",
+                "order_number": 2,
+                "question_id": "8859cc77-e2fb-4a01-93f1-b75e00a4eb61",
+                "updated_at": "2025-01-27T15:59:43.000000"
+            },
+            {
+                "choice_text": "A compressed spring",
+                "created_at": "2025-01-27T15:59:43.000000",
+                "id": "25723602-4b63-449c-8589-d81b03ba1a52",
+                "order_number": 3,
+                "question_id": "8859cc77-e2fb-4a01-93f1-b75e00a4eb61",
+                "updated_at": "2025-01-27T15:59:43.000000"
+            },
+            {
+                "choice_text": "Electric current",
+                "created_at": "2025-01-27T15:59:43.000000",
+                "id": "9745ece0-bfe5-4673-bf44-55a3988541a5",
+                "order_number": 4,
+                "question_id": "8859cc77-e2fb-4a01-93f1-b75e00a4eb61",
+                "updated_at": "2025-01-27T15:59:43.000000"
+            }
+        ],
+        "created_at": "2025-01-27T15:59:43.000000",
+        "id": "8859cc77-e2fb-4a01-93f1-b75e00a4eb61",
+        "order_number": 7,
+        "question_text": "Which example(s) illustrate(s) stored energy?",
+        "quiz_id": "4ca1b0ce-cada-4675-8376-a0a215c95bf4",
+        "updated_at": "2025-01-27T15:59:43.000000"
+    },
+    {
+        "allow_multiple_answers": false,
+        "choices": [
+            {
+                "choice_text": "W = Fd cosθ",
+                "created_at": "2025-01-27T15:59:43.000000",
+                "id": "91348782-b66c-4f56-96b0-5334ff24f934",
+                "order_number": 2,
+                "question_id": "31d5333c-068e-4fc0-b221-5f382d9a33af",
+                "updated_at": "2025-01-27T15:59:43.000000"
+            },
+            {
+                "choice_text": "W = Fd sinθ",
+                "created_at": "2025-01-27T15:59:43.000000",
+                "id": "196e3735-9af0-4038-b0cb-a93b8189799b",
+                "order_number": 3,
+                "question_id": "31d5333c-068e-4fc0-b221-5f382d9a33af",
+                "updated_at": "2025-01-27T15:59:43.000000"
+            },
+            {
+                "choice_text": "W = Fd tanθ",
+                "created_at": "2025-01-27T15:59:43.000000",
+                "id": "13fc01b4-4804-46a2-8294-0f14eb280b57",
+                "order_number": 4,
+                "question_id": "31d5333c-068e-4fc0-b221-5f382d9a33af",
+                "updated_at": "2025-01-27T15:59:43.000000"
+            }
+        ],
+        "created_at": "2025-01-27T15:59:43.000000",
+        "id": "31d5333c-068e-4fc0-b221-5f382d9a33af",
+        "order_number": 8,
+        "question_text": "How is work calculated?",
+        "quiz_id": "4ca1b0ce-cada-4675-8376-a0a215c95bf4",
+        "updated_at": "2025-01-27T15:59:43.000000"
+    },
+    {
+        "allow_multiple_answers": false,
+        "choices": [
+            {
+                "choice_text": "Kinetic Energy",
+                "created_at": "2025-01-27T15:59:43.000000",
+                "id": "cae99b54-9b83-4802-a96d-5614c8e623b8",
+                "order_number": 2,
+                "question_id": "d994951f-ba41-4f54-afeb-ea65e98b6659",
+                "updated_at": "2025-01-27T15:59:43.000000"
+            },
+            {
+                "choice_text": "Potential Energy",
+                "created_at": "2025-01-27T15:59:43.000000",
+                "id": "88890751-f4cb-4e1a-9222-81203205644f",
+                "order_number": 3,
+                "question_id": "d994951f-ba41-4f54-afeb-ea65e98b6659",
+                "updated_at": "2025-01-27T15:59:43.000000"
+            },
+            {
+                "choice_text": "Thermal Energy",
+                "created_at": "2025-01-27T15:59:43.000000",
+                "id": "d5d9feda-bf16-4b6e-84a9-a58544d19fd8",
+                "order_number": 4,
+                "question_id": "d994951f-ba41-4f54-afeb-ea65e98b6659",
+                "updated_at": "2025-01-27T15:59:43.000000"
+            }
+        ],
+        "created_at": "2025-01-27T15:59:43.000000",
+        "id": "d994951f-ba41-4f54-afeb-ea65e98b6659",
+        "order_number": 9,
+        "question_text": "What type of energy does a moving object have?",
+        "quiz_id": "4ca1b0ce-cada-4675-8376-a0a215c95bf4",
+        "updated_at": "2025-01-27T15:59:43.000000"
+    },
+    {
+        "allow_multiple_answers": false,
+        "choices": [
+            {
+                "choice_text": "Joule",
+                "created_at": "2025-01-27T15:59:43.000000",
+                "id": "1d0fc417-14b3-4000-8a21-4d47dc62d455",
+                "order_number": 2,
+                "question_id": "d7862170-240a-4084-9f0a-c43fb7efb8d9",
+                "updated_at": "2025-01-27T15:59:43.000000"
+            },
+            {
+                "choice_text": "Watt",
+                "created_at": "2025-01-27T15:59:43.000000",
+                "id": "e9abe757-597f-44f0-9c14-fa0a39724257",
+                "order_number": 3,
+                "question_id": "d7862170-240a-4084-9f0a-c43fb7efb8d9",
+                "updated_at": "2025-01-27T15:59:43.000000"
+            },
+            {
+                "choice_text": "Newton",
+                "created_at": "2025-01-27T15:59:43.000000",
+                "id": "44c481fc-073e-4c22-9c23-a2374d77a0d4",
+                "order_number": 4,
+                "question_id": "d7862170-240a-4084-9f0a-c43fb7efb8d9",
+                "updated_at": "2025-01-27T15:59:43.000000"
+            }
+        ],
+        "created_at": "2025-01-27T15:59:43.000000",
+        "id": "d7862170-240a-4084-9f0a-c43fb7efb8d9",
+        "order_number": 10,
+        "question_text": "What is the si unit for work?",
+        "quiz_id": "4ca1b0ce-cada-4675-8376-a0a215c95bf4",
+        "updated_at": "2025-01-27T15:59:43.000000"
+    }
+]
+
+
+{
+    "topic": ["Science", "Physics", "Mechanics"],
+    "quiz": {
+      "title": "Fundamentals of Mechanics",
+      "description": "A comprehensive quiz on the basics of mechanics, including laws of motion, forces, and energy.",
+      "time_limit": 12
+    },
+    "questions": [
+      {
+        "question_text": "Which law(s) describe(s) motion?",
+        "allow_multiple_answers": true,
+        "choices": [
+          { "choice_text": "Law of Inertia", "is_correct": true },
+          { "choice_text": "Law of Acceleration", "is_correct": true },
+          { "choice_text": "Law of Action and Reaction", "is_correct": true }
+        ]
+      },
+      {
+        "question_text": "What is the formula to calculate force?",
+        "allow_multiple_answers": false,
+        "choices": [
+          { "choice_text": "F = ma", "is_correct": true },
+          { "choice_text": "F = mv", "is_correct": false },
+          { "choice_text": "F = m/a", "is_correct": false }
+        ]
+      },
+      {
+        "question_text": "Which quantity(ies) involve(s) direction?",
+        "allow_multiple_answers": true,
+        "choices": [
+          { "choice_text": "Force", "is_correct": true },
+          { "choice_text": "Velocity", "is_correct": true },
+          { "choice_text": "Mass", "is_correct": false }
+        ]
+      },
+      {
+        "question_text": "What is the unit used to measure force in the SI system?",
+        "allow_multiple_answers": false,
+        "choices": [
+          { "choice_text": "Newton", "is_correct": true },
+          { "choice_text": "Joule", "is_correct": false },
+          { "choice_text": "Pascal", "is_correct": false }
+        ]
+      },
+      {
+        "question_text": "What is/are the principle(s) of energy conservation?",
+        "allow_multiple_answers": true,
+        "choices": [
+          { "choice_text": "Energy cannot be created or destroyed.", "is_correct": true },
+          { "choice_text": "Energy transforms from one form to another.", "is_correct": true },
+          { "choice_text": "Energy remains constant in an open system.", "is_correct": false }
+        ]
+      },
+      {
+        "question_text": "What is Earth's acceleration due to gravity?",
+        "allow_multiple_answers": false,
+        "choices": [
+          { "choice_text": "9.8 m/s²", "is_correct": true },
+          { "choice_text": "10 m/s²", "is_correct": false },
+          { "choice_text": "8.9 m/s²", "is_correct": false }
+        ]
+      },
+      {
+        "question_text": "Which example(s) illustrate(s) stored energy?",
+        "allow_multiple_answers": true,
+        "choices": [
+          { "choice_text": "Water stored in a dam", "is_correct": true },
+          { "choice_text": "A compressed spring", "is_correct": true },
+          { "choice_text": "Electric current", "is_correct": false }
+        ]
+      },
+      {
+        "question_text": "How is work calculated?",
+        "allow_multiple_answers": false,
+        "choices": [
+          { "choice_text": "W = Fd cosθ", "is_correct": true },
+          { "choice_text": "W = Fd sinθ", "is_correct": false },
+          { "choice_text": "W = Fd tanθ", "is_correct": false }
+        ]
+      },
+      {
+        "question_text": "What type of energy does a moving object have?",
+        "allow_multiple_answers": false,
+        "choices": [
+          { "choice_text": "Kinetic Energy", "is_correct": true },
+          { "choice_text": "Potential Energy", "is_correct": false },
+          { "choice_text": "Thermal Energy", "is_correct": false }
+        ]
+      },
+      {
+        "question_text": "What is the SI unit for work?",
+        "allow_multiple_answers": false,
+        "choices": [
+          { "choice_text": "Joule", "is_correct": true },
+          { "choice_text": "Watt", "is_correct": false },
+          { "choice_text": "Newton", "is_correct": false }
+        ]
+      }
+    ]
+  }
+  
