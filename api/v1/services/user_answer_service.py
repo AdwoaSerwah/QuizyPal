@@ -186,7 +186,7 @@ def add_user_answer(data: Dict[str, Any], storage: Any) -> tuple:
 
         question = get_question_by_id(question_id, storage)
         if not question:
-            abort(404, description="Question not found")
+            abort(404, description=f"Question {question_id}  not found")
 
         choice = get_choice_by_id(choice_id, storage)
         if not choice:
