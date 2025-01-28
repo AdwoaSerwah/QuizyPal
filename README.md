@@ -103,11 +103,8 @@ sudo systemctl stop mysql
 docker-compose up --build
 
 OR If you want to keep your local MySQL service running and
-avoid port conflicts, you can change the MySQL port in the
-# docker-compose.yml file.
-# For example, change the 3306 port to a different port (e.g., 3307)
-# in the db service:
-
+avoid port conflicts, you can change the MySQL port in the docker-compose.yml file.
+**For example, change the 3306 port to a different port (e.g., 3307) in the db service:**
 db:
   image: mysql:5.7
   container_name: quizypal_db
@@ -122,7 +119,7 @@ db:
     - quizypal_db_data:/var/lib/mysql
 
 **Then run this again**
-````bash
+```bash
 docker-compose up --build
 ```
 
@@ -137,32 +134,35 @@ docker-compose up --build
 docker-compose up
 ```
 
-# To start the container and ensure everything is set up (including
-# rebuilding images if necessary)
+**To start the container and ensure everything is set up (including rebuilding images if necessary)**
 ```bash
   docker-compose up
 ```
 
-# To stop and remove containers, networks, and possibly volumes and
-# images. (in case you need to rebuild or something)
-docker-compose down
-
-# Temporarily stops the running containers but does not remove/delete them
-docker-compose stop
-
-# Starts already created containers that were previously stopped
-# without rebuilding or changing anything.
-docker-compose start
-
-# Restart the application service
-docker-compose restart app
-
-# Verify the Containers are Running
-docker ps
-
-**You can access the MySQL database from within the container using**:
+**Other Useful Commands**
+**To stop and remove containers, networks, and possibly volumes and images:**
 ```bash
-docker exec -it quizypal_db mysql -u root -p
+docker-compose down
+```
+
+**Temporarily stop the running containers:**
+```bash
+docker-compose stop
+```
+
+**Start already created containers that were previously stopped**
+```bash
+docker-compose start
+```
+
+**Restart the application service:**
+```bash
+docker-compose restart app
+```
+
+**Verify the Containers are Running**
+```bash
+docker ps
 ```
 
 **Verify that Redis is working correctly:**
@@ -175,92 +175,33 @@ docker exec -it quizypal_redis redis-cli
 docker logs quizypal_app
 ```
 
-# Enter the Application Container
-# Access the running container where your application and its
-# dependencies are installed:
+### Database Setup
+**The data base will be set up with the docker.**
+The grant_privileges.sh has been added to the docker-compose.yml to grant all privileges to the user created during the docker setup.
+
+You can run the grant_privileges.sh again if it has not been set up automatically by:
 ```bash
+./grant_privileges.sh
+```
+
+### Database Population
+To add data to your database tables:
+1. **Access the running container where your application and its dependencies are installed:**
+```bash
+
 docker exec -it quizypal_app bash
 ```
 
+2. **Run the insert_data.py**:
+```bash
+./insert_data.py
+```
+Note:  You can change or add more to the insert_data.py but make sure at least one user's role is set to "admin" so you can send requests in the admin only routes.
 
-
-## Database Setup
-
-To set up the MySQL database for the Take-A-Bite project, follow these steps:
-
-1. **Install MySQL**: Make sure you have MySQL installed on your machine. If you haven't installed it yet, refer to the [MySQL Installation Guide](https://dev.mysql.com/doc/refman/8.0/en/installing.html).
-
-2. **Create the database and user** by running the following command in your terminal:
-
-   You can either run the SQL commands directly or use the setup file:
-
-   - **Option 1: Run the SQL commands directly**:
-
-     ```bash
-     mysql -u root -p  # Log into MySQL
-     ```
-
-     Then execute the following SQL commands:
-
-     ```sql
-     CREATE DATABASE IF NOT EXISTS take_a_bite_db;
-     CREATE USER IF NOT EXISTS 'your_username'@'localhost' IDENTIFIED BY 'your_password';
-     GRANT ALL PRIVILEGES ON `take_a_bite_db`.* TO 'your_username'@'localhost';
-     FLUSH PRIVILEGES;
-     ```
-
-   - **Option 2: Use the setup file**:
-
-     If you have a `setup_mysql_dev.sql` file, first, open the file in a text editor and modify the default values for the username and password:
-
-     ```sql
-     CREATE DATABASE IF NOT EXISTS take_a_bite_db;
-     CREATE USER IF NOT EXISTS 'your_username'@'localhost' IDENTIFIED BY 'your_password';
-     GRANT ALL PRIVILEGES ON `take_a_bite_db`.* TO 'your_username'@'localhost';
-     FLUSH PRIVILEGES;
-     ```
-
-     After making the changes, you can execute the file directly:
-
-     ```bash
-     mysql -u root -p < setup_mysql_dev.sql
-     ```
-
-    **Or if you need to use sudo:**
-
-     ```bash
-     sudo mysql < setup_mysql_dev.sql
-     ```
-
-### Database Population
-
-To populate the database with initial data, follow these steps:
-
-1. **Run the Categories Script**:
-   Open `categories.sh` and replace the placeholders (`your_username`, `your_password`) with your actual MySQL credentials. Then run the script:
-
-   ```bash
-   chmod +x categories.sh
-   ./categories.sh
-
-2. **Update the Menu Items Script**:
-   Similarly, open menu_items.sh and replace the placeholders with your actual credentials. Before running the script, also replace the category ID placeholders (example, CATEGORY_ID_BREAKFAST) with the actual IDs created in the previous step.
-
-3. **Run the Menu Items Script**:
-   After updating the menu_items.sh, run the script:
-
-   ```bash
-   chmod +x menu_items.sh
-   ./menu_items.sh
-   ```
-
-4. **Run the Locations Script**:
-   Finally, open locations.sh, update it with your credentials, and run it:
-
-   ```bash
-   chmod +x locations.sh
-   ./locations.sh
-   ```
+**You can access the MySQL database from within the container using to verify and query the data inserted**:
+```bash
+docker exec -it quizypal_db mysql -u root -p
+```
 
 Notes
 Make sure to replace your_username, your_password, and other placeholders with the actual details you created during the setup process.
@@ -273,63 +214,49 @@ Bash Environment: These instructions assume you are using a Unix-like environmen
 **Create a `.env` file in the root directory of your project and populate it with the following variables**:
 
 ```plaintext
-HBNB_ENV=dev
-HBNB_MYSQL_USER=your_username_here
-HBNB_MYSQL_PWD=your_password_here
-HBNB_MYSQL_HOST=localhost
-HBNB_MYSQL_DB=take_a_bite_db
-HBNB_TYPE_STORAGE=db
-DATABASE_URL=mysql+mysqldb://your_username_here:your_password_here@localhost/take_a_bite_db
-HBNB_API_HOST=0.0.0.0
-HBNB_API_PORT=5005
+MYSQL_ROOT_PASSWORD=your_root_password
+MYSQL_USER=your_mysql_user
+MYSQL_PASSWORD=your_mysql_password
+MYSQL_HOST=localhost
+MYSQL_DATABASE=your_database_name
+DATABASE_PORT=3306
+DATABASE_URL=mysql+mysqlconnector://your_mysql_user:your_mysql_password@your_database_host:3306/your_database_name
+DATABASE_TEST_URL=mysql+mysqlconnector://your_mysql_user:your_mysql_password@your_database_host:3306/your_test_database_name
 
-SECRET_KEY=your_secret_key_here
+FLASK_APP=api/v1/app.py
+FLASK_ENV=development
 
-MAIL_USERNAME=your_email
-MAIL_PASSWORD=your_password
-MAIL_DEFAULT_SENDER=your_default_email
+REDIS_HOST=quizypal_redis
+REDIS_PORT=6379
+REDIS_URL=redis://quizypal_redis:6379/0  # Matches the 'redis' service in docker-compose
 
-PAYSTACK_SECRET_KEY=your_paystack_secret_key
+PYTHONPATH=/app
+
+# STORAGE_TYPE=db
+API_HOST=0.0.0.0
+API_PORT=5000
+
+SECRET_KEY=your_secret_key
+JWT_SECRET_KEY=your_jwt_secret_key
+
+MAIL_USERNAME=your_email_address
+MAIL_PASSWORD=your_email_password
+MAIL_DEFAULT_SENDER=your_email_address
 ```
 
-**Generate the SECRET_KEY**
+**Generate the SECRET_KEY and JWT_SECRET_KEY**
 To generate a random secret key for your application, run the following command:
 
 ```bash
-python secret_key.py
+python secret_key_generator.py
 ```
 This will output a secret key that you should copy and paste into your .env file as the value for SECRET_KEY.
+Now run the same script again to generate another secret_key for the JWT_SECRET_KEY
 
 **Email Configuration**
 Gmail’s SMTP server is what is being used.
 
 Note: If you have two-step verification enabled for your Google account, you will need to generate an App Password to use as the MAIL_PASSWORD.
-
-**Obtain Paystack API Keys**
-1. Go to the Paystack website and sign up for an account if you
-don't have one. Follow the instructions to obtain your public and secret keys.
-
-2. Replace the placeholder your_paystack_secret_key in the .env file with your actual Paystack secret key.
-
-3. In your static JavaScript file static/scripts/checkout.js, replace the following line with your actual Paystack public key:
-
-```javascript
-key: 'pk_test_3172601967078640096a6f10075e6537df112f15',
-```
-
-Important: Do not use your Paystack secret key in your client-side code (JavaScript). Only use the public key in the client-side code for security reasons.
-
-Notes
-The Paystack public key is safe to use in client-side code. The secret key should remain confidential and only be used in your server-side code (e.g., in API calls to Paystack).
-
-### Run the Application:
-Start your application using:
-```bash
-python3 -m api.v1.app
-```
-
-This will start the Flask application, and you can access it in your browser at http://127.0.0.1:5005.
-
 
 ## Features
 
