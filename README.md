@@ -6,7 +6,10 @@ QuizyPal is an interactive quiz application designed to provide an engaging plat
 
 ### PRESENTATION SLIDES LINK: [**here**](https://docs.google.com/presentation/d/1RfYoCvJAB9n9Qrr7CL_uwruBxHJwFKyGB4OTqlhvY1g/edit?usp=sharing)
 
+### QUIZYPAL API POSTMAN COLLECTION (more details in the [**Postman**](#postman-collection-instructions) section): [**here**](https://www.postman.com/research-geoscientist-64388512/my-workspace/collection/40764868-5a04296f-1ad7-45c7-8f32-69141777f7be?action=share&creator=40764868&active-environment=40764868-0a1a0347-6843-48c3-a938-74598e18dd24)
+
 ## Installation
+
 **Note:** These instructions assume you are using a Unix-like environment (Linux, macOS, etc.) where bash is available. If you're on Windows, you may need to use Git Bash or Windows Subsystem for Linux (WSL).
 
 To get a local copy up and running, follow these steps:
@@ -268,8 +271,7 @@ For more details on the available routes, refer to the [API Endpoints](#api-endp
 
 ## API Endpoints
 
-For a more detailed documentation and to test out the routes, visit the Postman collection [here](https://www.postman.com/research-geoscientist-64388512/my-workspace/collection/40764868-5a04296f-1ad7-45c7-8f32-69141777f7be?action=share&creator=40764868&active-environment=40764868-0a1a0347-6843-48c3-a938-74598e18dd24
-)
+For a more detailed documentation, refer to the [**Postman Collection Instructions**](#postman-collection-instructions) section for further details.
 
 **Note:** All routes are prefixed with `/api/v1`. Please ensure to include this prefix in your requests. For example, to log in, the route will be `/api/v1/login`.
 
@@ -666,7 +668,7 @@ For a more detailed documentation and to test out the routes, visit the Postman 
 
 - **For Documentation Only**: If you're only interested in **reading the documentation** for the API routes, you can directly view the collection [here](https://www.postman.com/research-geoscientist-64388512/my-workspace/collection/40764868-5a04296f-1ad7-45c7-8f32-69141777f7be?action=share&creator=40764868&active-environment=40764868-0a1a0347-6843-48c3-a938-74598e18dd24).
 
-- **For Testing the Routes**: If you want to **send API requests test the routes** using Postman, read the setup instructions below before clicking the link:
+- **For Testing the Routes**: If you want to **send API requests test the routes** using Postman, read the setup instructions below.
 ---
 ### Setup Instructions for Testing with Postman  
 
@@ -722,8 +724,6 @@ You need to be logged in to access user-specific routes like:
 - Send a **GET request** to retrieve all records of that model (e.g., to get a valid user id, send a request to `GET /users` to retrieve all users and copy one of the IDs returned to use as the `user_id`).
 
 Now, your Postman setup is complete, and you can start testing the API! 🚀
-
-- **[QuizyPal API Postman Collection](https://www.postman.com/research-geoscientist-64388512/my-workspace/collection/40764868-5a04296f-1ad7-45c7-8f32-69141777f7be?action=share&creator=40764868&active-environment=40764868-0a1a0347-6843-48c3-a938-74598e18dd24)**.
 
 ## Tech Stack  
 
