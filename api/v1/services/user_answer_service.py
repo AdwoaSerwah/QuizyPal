@@ -142,7 +142,7 @@ def add_user_answer(data: Dict[str, Any], storage: Any) -> tuple:
         abort(404, description="Result not found")
 
     # Check if the quiz status is in-progress
-    if current_user_role != 'admin' and result.status not in ["in-progress"]:
+    if current_user_role != 'admin' and result.status.value not in ["in-progress"]:
         abort(400, description="Quiz has already been completed or timed out.")
 
     # Check if the user ID from the JWT matches the user ID associated with the result
