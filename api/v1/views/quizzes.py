@@ -531,7 +531,11 @@ def start_quiz() -> ResponseReturnValue:
         abort(404, description="User not found")
 
     # Check if the user already has an in-progress quiz
-    in_progress_quiz = storage.filter_by(Result, user_id=user_id, status="in-progress")
+    in_progress_quiz = storage.filter_by(Result,
+                                         user_id=user_id,
+                                         status=QuizSessionStatus.IN_PROGRESS)
+    print(f"In progress: {in_progress_quiz}, in-progress: {in_progress_quiz}")
+
     if in_progress_quiz and current_user_role != "admin":
         abort(400, description="You already have an in-progress quiz. Please complete it before starting another quiz.")
 
@@ -616,7 +620,7 @@ def stop_quiz():
         abort(403, description="You are not authorized to stop this quiz.")
 
     # Check if the quiz status is in-progress
-    if result.status not in ["in-progress"] and current_user_role != "admin":
+    if result.status.value not in ["in-progress"] and current_user_role != "admin":
         abort(400, description="Quiz has already been completed or timed out.")
 
     # Fetch the associated quiz from the result object (no need for another storage call)
