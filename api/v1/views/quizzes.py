@@ -534,7 +534,6 @@ def start_quiz() -> ResponseReturnValue:
     in_progress_quiz = storage.filter_by(Result,
                                          user_id=user_id,
                                          status=QuizSessionStatus.IN_PROGRESS)
-    print(f"In progress: {in_progress_quiz}, in-progress: {in_progress_quiz}")
 
     if in_progress_quiz and current_user_role != "admin":
         abort(400, description="You already have an in-progress quiz. Please complete it before starting another quiz.")
@@ -552,7 +551,7 @@ def start_quiz() -> ResponseReturnValue:
     max_attempts_per_day = 3  # Set your max attempts per day limit
 
     if attempts_today >= max_attempts_per_day and current_user_role != "admin":
-        abort(400, description=f"You've reached the maximum number of attempts ({max_attempts_per_day}) for today.")
+        abort(400, description=f"You've reached the maximum number of attempts ({max_attempts_per_day}) for this quiz for today.")
 
     # Create a result record for this quiz attempt
     data = {
