@@ -135,6 +135,8 @@ class BaseModel():
                 continue
             if key == "time_limit":
                 key = "time_limit (in mins)"
+            if key == "time_taken":
+                key = "time_taken (in seconds)"
             if type(value) is datetime:
                 result[key] = value.strftime(time_format)
             elif isinstance(value, Enum):  # Check for enum and convert to string
