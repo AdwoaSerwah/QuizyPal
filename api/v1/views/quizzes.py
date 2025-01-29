@@ -167,7 +167,7 @@ def get_quiz_questions(quiz_id: str = None) -> ResponseReturnValue:
     question_id = request.args.get('question_id')
 
     # Check if the user has an in-progress result for the specified quiz
-    result = storage.filter_by(Result, quiz_id=quiz_id, user_id=user_id, status="in-progress")
+    result = storage.filter_by(Result, quiz_id=quiz_id, user_id=user_id, status=QuizSessionStatus.IN_PROGRESS)
     if not result and current_user_role != "admin":
         abort(403, description="You do not have an in-progress quiz for the specified quiz.")
 
@@ -216,7 +216,7 @@ def get_quiz_questions_and_choices(quiz_id: str = None) -> ResponseReturnValue:
     question_id = request.args.get('question_id')
 
     # Check if the user has an in-progress result for the specified quiz
-    result = storage.filter_by(Result, quiz_id=quiz_id, user_id=user_id, status="in-progress")
+    result = storage.filter_by(Result, quiz_id=quiz_id, user_id=user_id, status=QuizSessionStatus.IN_PROGRESS)
     if not result and current_user_role != "admin":
         abort(403, description="You do not have an in-progress quiz for the specified quiz.")
 
