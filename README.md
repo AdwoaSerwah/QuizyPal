@@ -2,21 +2,21 @@
 
 QuizyPal is an interactive quiz application designed to provide an engaging platform for users to test and improve their knowledge. It allows users to take quizzes on various topics, track their progress, and receive feedback based on their performance. The app is built with a focus on providing an intuitive experience for both quiz takers and administrators.
 
-### ACTUAL PRESENTATION AND DEMO VIDEO LINK: [here](https://drive.google.com/file/d/1dhgt9wKVBHR2YfcEM6GWkHNzILnitgg8/view?usp=sharing)
+### ACTUAL PRESENTATION AND DEMO VIDEO LINK: [**here**](https://drive.google.com/file/d/1dhgt9wKVBHR2YfcEM6GWkHNzILnitgg8/view?usp=sharing)
 
-### PRESENTATION SLIDES LINK: [here](https://docs.google.com/presentation/d/1RfYoCvJAB9n9Qrr7CL_uwruBxHJwFKyGB4OTqlhvY1g/edit?usp=sharing)
+### PRESENTATION SLIDES LINK: [**here**](https://docs.google.com/presentation/d/1RfYoCvJAB9n9Qrr7CL_uwruBxHJwFKyGB4OTqlhvY1g/edit?usp=sharing)
 
 ## Installation
 **Note:** These instructions assume you are using a Unix-like environment (Linux, macOS, etc.) where bash is available. If you're on Windows, you may need to use Git Bash or Windows Subsystem for Linux (WSL).
 
 To get a local copy up and running, follow these steps:
 
-**Clone the repository**:
+Clone the repository:
    ```bash
    git clone https://github.com/AdwoaSerwah/QuizyPal.git
    ```
 
-**Navigate to the project directory**:
+Navigate to the project directory:
 
    ```bash
    cd QuizyPal
@@ -24,7 +24,7 @@ To get a local copy up and running, follow these steps:
 
 ### Environment Variables
 
-**Create a `.env` file in the root directory of your project and populate it with the following variables**:
+Create a `.env` file in the root directory of your project and populate it with the following variables:
 
 ```plaintext
 MYSQL_ROOT_PASSWORD=your_root_password
@@ -72,7 +72,7 @@ Gmail’s SMTP server is what is being used.
 
 
 ### Docker and docker-compose setup
-**Install docker engine**:
+Install docker engine:
 ```bash
 sudo apt update
 sudo apt install apt-transport-https ca-certificates curl software-properties-common
@@ -82,43 +82,43 @@ sudo apt update
 sudo apt install docker-ce
 ```
 
-**Verify that Docker was installed correctly**:
+Verify that Docker was installed correctly:
 ```bash
 sudo docker --version
 ```
 
-**Install Docker Compose**
+Install Docker Compose
 ```bash
 sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
 sudo chmod +x /usr/local/bin/docker-compose
 ```
 
-**Verify Docker Compose is installed**
+Verify Docker Compose is installed
 ```bash
 docker-compose --version
 ```
 
-**Start Docker after installation**
+Start Docker after installation
 ```bash
 sudo systemctl start docker
 ```
 
-**Enable Docker to start on boot**:
+Enable Docker to start on boot:
 If you want Docker to start automatically when your system boots
 ```bash
 sudo systemctl enable docker
 ```
 
-**Build the services (app and db) as per the configurations and start the containers for your app and MySQL database.**
+Build the services (app and db) as per the configurations and start the containers for your app and MySQL database.
 
-**Option 1: you have to use sudo every time**:
+**Option 1:** you have to use sudo every time:
 ```bash
 sudo docker-compose up --build
 ```
 
-**Option 2: Allows you to run Docker commands without sudo**:
+**Option 2:** Allows you to run Docker commands without sudo:
 
-**Add your user to the Docker group:**
+Add your user to the Docker group:
 ```bash
 sudo usermod -aG docker $USER
 ```
@@ -128,17 +128,17 @@ Run this to apply immediately (no logout or restart needed).
 ```bash
 newgrp docker
 ```
-**If you have MySQL installed locally and it's running, you can either stop it to free up the port (option 1):**
+If you have MySQL installed locally and it's running, you can either stop it to free up the port (option 1):
 ```bash
 sudo systemctl stop mysql
 ```
-**Then run this again**
+Then run this again
 ```bash
 docker-compose up --build
 ```
 *OR*
 
-**If you want to keep your local MySQL service running and avoid port conflicts, you can change the MySQL port in the docker-compose.yml file. For example, change the 3306 port to a different port (e.g., 3307) in the db service:**
+If you want to keep your local MySQL service running and avoid port conflicts, you can change the MySQL port in the docker-compose.yml file. For example, change the 3306 port to a different port (e.g., 3307) in the db service:
 ```plaintext
 db:
   image: mysql:5.7
@@ -154,39 +154,39 @@ db:
     - quizypal_db_data:/var/lib/mysql
 ```
 
-**Then run this again**
+Then run this again
 ```bash
 docker-compose up --build
 ```
 
 #### Other Useful Commands: ####
 
-**To stop and remove containers, networks, and possibly volumes and images:**
+To stop and remove containers, networks, and possibly volumes and images:
 ```bash
 docker-compose down
 ```
 
-**Temporarily stop the running containers:**
+Temporarily stop the running containers:
 ```bash
 docker-compose stop
 ```
 
-**Start already created containers that were previously stopped**
+Start already created containers that were previously stopped
 ```bash
 docker-compose start
 ```
 
-**Restart the application service:**
+Restart the application service:
 ```bash
 docker-compose restart app
 ```
 
-**Verify the Containers are Running**
+Verify the Containers are Running
 ```bash
 docker ps
 ```
 
-**Verify that Redis is working correctly:**
+Verify that Redis is working correctly:
 ```bash
 docker exec -it quizypal_redis redis-cli
 ```
@@ -194,25 +194,25 @@ docker exec -it quizypal_redis redis-cli
 ### Database Setup
 The data base will be set up with the docker. The init-scripts/grant_privileges.sh has been added to the docker-compose.yml to grant all privileges to the user created during the docker setup.
 
-**You can run the grant_privileges.sh again if it has not been set up automatically by:**
+You can run the grant_privileges.sh again if it has not been set up automatically by:
 ```bash
 ./grant_privileges.sh
 ```
 
 ### Database Population
 To add data to your database tables follow the steps below.
-**Access the running container where your application and its dependencies are installed:**
+Access the running container where your application and its dependencies are installed:
 ```bash
 docker exec -it quizypal_app bash
 ```
 
-**Then run the insert_data.py**:
+Then run the insert_data.py:
 ```bash
 ./insert_data.py
 ```
 **Note:**  You can change or add more to the insert_data.py but make sure at least one user's role is set to "admin" so you can send requests in the admin only routes.
 
-**You can access the MySQL database from within the container using to verify and query the data inserted**:
+You can access the MySQL database from within the container using to verify and query the data inserted:
 ```bash
 docker exec -it quizypal_db mysql -u root -p
 ```
@@ -270,6 +270,7 @@ For more details on the available routes, refer to the [API Endpoints](#api-endp
 
 For a more detailed documentation and to test out the routes, visit the Postman collection [here](https://www.postman.com/research-geoscientist-64388512/my-workspace/collection/40764868-5a04296f-1ad7-45c7-8f32-69141777f7be?action=share&creator=40764868&active-environment=40764868-0a1a0347-6843-48c3-a938-74598e18dd24
 )
+
 **Note:** All routes are prefixed with `/api/v1`. Please ensure to include this prefix in your requests. For example, to log in, the route will be `/api/v1/login`.
 
 ### Authentication
