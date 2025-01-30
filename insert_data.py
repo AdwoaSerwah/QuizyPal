@@ -10,16 +10,10 @@ from models.question import Question
 from models.choice import Choice
 from models.result import Result, QuizSessionStatus
 from models.user_answer import UserAnswer
-from datetime import datetime, timezone  # Missing imports
+from datetime import datetime, timezone
 from typing import Optional
 
 
-
-
-# Ensure that the session is initialized
-# storage.reload()
-
-# Create a new user
 def add_user(first_name,
              last_name,
              username,
@@ -28,14 +22,14 @@ def add_user(first_name,
              role=Role.USER,
              password_reset_token=None,
              token_expires_at=None):
-    
+    """Adds a new user to the database"""
     username_exists = storage.get_by_value(User, 'username', username)
     email_exists = storage.get_by_value(User, 'email', email)
 
     if username_exists:
         print(f"Username '{username}' already exists!")
         return username_exists
-    
+
     if email_exists:
         print(f"Email '{email}' already exists!")
         return email_exists
@@ -67,7 +61,7 @@ def add_topic(name, parent=None):
     if topic_name:
         print(f"Topic '{topic_name.name}' exists already!")
         return None
-    
+
     name1 = Topic(name=name, parent=parent)
     name1.save()
     print(f"{name1.name} added!")
@@ -77,7 +71,8 @@ def add_topic(name, parent=None):
 
 def add_quiz(title, description, time_limit, topic_name=None):
     """
-    Adds a quiz to the specified topic, or creates it without a topic if no topic is provided.
+    Adds a quiz to the specified topic, or creates it without
+    a topic if no topic is provided.
     """
     quiz_title = storage.get_by_value(Quiz, "title", title)
     if quiz_title:
@@ -97,33 +92,35 @@ def add_quiz(title, description, time_limit, topic_name=None):
         title=title,
         description=description,
         time_limit=time_limit,
-        topic_id=topic.id if topic else None  # Assign topic_id if topic is found, else None
+        # Assign topic_id if topic is found, else None
+        topic_id=topic.id if topic else None
     )
-
     quiz.save()
-    print(f"Quiz '{quiz.title}' added" + (f" under topic '{topic.name}'" if topic else "") + ".")
-
+    print(
+        f"Quiz '{quiz.title}' added"
+        f"{' under topic ' + topic.name if topic else ''}."
+    )
     return quiz
+
 
 def get_next_order_number(model, parent_id, parent_field):
     """
-    Returns the next order number for a specific model by counting the number of objects 
-    associated with the given parent_id using the specified parent_field.
+    Returns the next order number for a specific model by
+    counting the number of objects associated with the given
+    parent_id using the specified parent_field.
 
     Args:
-        model (Type[Base]): The model to count objects for (e.g., Question, Choice, etc.).
-        parent_id (str): The ID of the parent entity (e.g., quiz_id for questions, question_id for choices).
-        parent_field (str): The field that references the parent entity (e.g., 'quiz_id' for Question, 'question_id' for Choice).
+        model (Type[Base]): The model to count objects for (e.g., Question,
+                            Choice, etc.).
+        parent_id (str): The ID of the parent entity (e.g., quiz_id for
+                         questions, question_id for choices).
+        parent_field (str): The field that references the parent entity
+                            (e.g., 'quiz_id' for Question, 'question_id'
+                            for Choice).
 
     Returns:
         int: The next order number.
     """
-    # Count objects based on the parent_field and parent_id
-    # print(model)
-    # print(parent_field)
-    # print(parent_id)
-    object_count = 0
-
     data = storage.get_by_value(model, parent_field, parent_id)
     # Normalize the data into a list
     if not isinstance(data, list):  # Single object or None
@@ -146,18 +143,20 @@ def add_question_to_quiz(quiz, question_text, allow_multiple_answers=False):
         Question: The created question object.
     """
     # First, try to find a question with the same question_text
-    existing_question = storage.get_by_value(Question, "question_text", question_text)
-    
+    existing_question = storage.get_by_value(
+        Question, "question_text", question_text)
+
     # Get the next order number for the question
     if not existing_question:
         order_number = get_next_order_number(Question, quiz.id, 'quiz_id')
 
     # If a question is found, check if it belongs to the same quiz
     if existing_question and existing_question.quiz_id == quiz.id:
-        print(f"Question {existing_question.order_number}: '{question_text}' already exists in quiz '{quiz.title}'!")
+        print(
+            f"Question {existing_question.order_number}: '{question_text}' "
+            f"already exists in quiz '{quiz.title}'!"
+        )
         return existing_question
-
-
 
     # Create and save the question
     question = Question(
@@ -167,8 +166,10 @@ def add_question_to_quiz(quiz, question_text, allow_multiple_answers=False):
         order_number=order_number  # Assign the order number
     )
     question.save()
-    print(f"Question {order_number}: '{question_text}' added to quiz '{quiz.title}'.")
-
+    print(
+        f"Question {order_number}: '{question_text}' "
+        f"added to quiz '{quiz.title}'."
+        )
     return question
 
 
@@ -187,18 +188,23 @@ def add_choice_to_question(question, choice_text, is_correct):
 
     # Check if the choice already exists
     existing_choice = storage.get_by_value(Choice, "choice_text", choice_text)
-    # 
 
     # Handle the case where multiple choices are returned
     if isinstance(existing_choice, list):
         for choice in existing_choice:
             if choice.question_id == question.id:
-                print(f"Choice {choice.order_number}: '{choice_text}' already exists for question '{question.question_text}'!")
+                print(
+                    f"Choice {choice.order_number}: '{choice_text}' "
+                    f"already exists for question '{question.question_text}'!"
+                )
                 return choice
 
     # Handle the case where a single choice object is returned
     elif existing_choice and existing_choice.question_id == question.id:
-        print(f"Choice {existing_choice.order_number}: '{choice_text}' already exists for question '{question.question_text}'!")
+        print(
+            f"Choice {existing_choice.order_number}: '{choice_text}' "
+            f"already exists for question '{question.question_text}'!"
+        )
         return existing_choice
 
     # Get the next order number for the choice
@@ -212,11 +218,11 @@ def add_choice_to_question(question, choice_text, is_correct):
         order_number=order_number  # Assign the order number
     )
     choice.save()
-    print(f"Choice {order_number}: '{choice_text}' added to question '{question.question_text}'.")
-
+    print(
+        f"Choice {order_number}: '{choice_text}' "
+        f"added to question '{question.question_text}'."
+    )
     return choice
-
-
 
 
 def add_result(
@@ -238,14 +244,20 @@ def add_result(
         user_id (int): The ID of the user.
         quiz_id (int): The ID of the quiz.
         score (str): The score the user obtained. Defaults to '0.00'.
-        time_taken (int): The time taken to complete the quiz in seconds. Defaults to 0.
-        status (QuizSessionStatus): The status of the quiz attempt. Defaults to "IN_PROGRESS".
-        submitted_at (Optional[datetime]): The timestamp when the quiz was submitted. Defaults to now.
-        start_time (Optional[datetime]): The timestamp when the quiz started. Defaults to now.
-        end_time (Optional[datetime]): The timestamp when the quiz ended. Defaults to now.
+        time_taken (int): The time taken to complete the quiz in seconds.
+                          Defaults to 0.
+        status (QuizSessionStatus): The status of the quiz attempt.
+                                    Defaults to "IN_PROGRESS".
+        submitted_at (Optional[datetime]): The timestamp when the quiz was
+                                           submitted. Defaults to now.
+        start_time (Optional[datetime]): The timestamp when the quiz started.
+                                         Defaults to now.
+        end_time (Optional[datetime]): The timestamp when the quiz ended.
+                                       Defaults to now.
 
     Returns:
-        Optional[Result]: The created result object or None if conditions are not met.
+        Optional[Result]: The created result object or
+                          None if conditions are not met.
     """
     # Set default timestamps if not provided
     now = datetime.now(timezone.utc)
@@ -307,7 +319,7 @@ def add_answer(
     """
     Adds an answer to a quiz question for a specific user and result_id.
 
-    If the question allows only one answer (allow_multiple_answers=False), 
+    If the question allows only one answer (allow_multiple_answers=False),
     the existing answer is replaced. Otherwise, a new answer is added.
     Ensures the quiz attempt is still in progress before adding the answer.
 
@@ -319,7 +331,8 @@ def add_answer(
         result_id (str): The result_id for the specific quiz attempt.
 
     Returns:
-        UserAnswer: The created or updated UserAnswer object, or None if the quiz is no longer in progress.
+        UserAnswer: The created or updated UserAnswer object
+                    or None if the quiz is no longer in progress.
     """
     # Fetch the quiz
     quiz = storage.get_by_value(Quiz, "title", quiz_title)
@@ -330,12 +343,18 @@ def add_answer(
     # Fetch the result to check if the quiz is still in progress
     result = storage.get_by_value(Result, "id", result_id)
     if not result:
-        print(f"Result for the quiz attempt with result_id '{result_id}' does not exist!")
+        print(
+            f"Result for the quiz attempt with result_id ",
+            f"'{result_id}' does not exist!"
+        )
         return None
-    
-    # Check if the quiz is still in progress (status should not be 'COMPLETED' or 'TIMED_OUT')
-    if result.status in [QuizSessionStatus.COMPLETED, QuizSessionStatus.TIMED_OUT]:
-        print(f"Cannot submit answer. The quiz with result_id '{result_id}' is already {result.status.value}!")
+
+    # Check if the quiz is still in progress
+    if result.status.value in ["completed", "timed-out"]:
+        print(
+            f"Cannot submit answer. The quiz with result_id '{result_id}' "
+            f"is already {result.status.value}!"
+        )
         return None
 
     # Fetch the question
@@ -343,7 +362,10 @@ def add_answer(
         (q for q in quiz.questions if q.question_text == question_text), None
     )
     if not question:
-        print(f"Question '{question_text}' does not exist in quiz '{quiz_title}'!")
+        print(
+            f"Question '{question_text}' does not exist "
+            f"in quiz '{quiz_title}'!"
+        )
         return None
 
     # Fetch the choice
@@ -351,12 +373,18 @@ def add_answer(
         (c for c in question.choices if c.choice_text == choice_text), None
     )
     if not choice:
-        print(f"Choice '{choice_text}' does not exist for question '{question_text}'!")
+        print(
+            f"Choice '{choice_text}' does not exist "
+            f"for question '{question_text}'!"
+        )
         return None
 
     # Fetch existing answers for the same user, question, and result
     existing_answers = storage.filter_by(
-        UserAnswer, user_id=user_id, question_id=question.id, result_id=result_id
+        UserAnswer,
+        user_id=user_id,
+        question_id=question.id,
+        result_id=result_id
     )
 
     # Handle single-answer questions
@@ -367,7 +395,10 @@ def add_answer(
             if existing_answer.choice_id != choice.id:
                 existing_answer.choice_id = choice.id
                 storage.save()
-                print(f"Answer updated for user '{user_id}' in quiz '{quiz_title}'!")
+                print(
+                    f"Answer updated for user '{user_id}' "
+                    f"in quiz '{quiz_title}'!"
+                )
             else:
                 print("Your choice is still the same!")
             return existing_answer
@@ -376,10 +407,13 @@ def add_answer(
     else:
         # Check if the choice has already been selected for this question
         if any(answer.choice_id == choice.id for answer in existing_answers):
-            print(f"Choice '{choice_text}' has already been selected for this question!")
+            print(
+                f"Choice '{choice_text}' has already been selected "
+                f"for this question!"
+            )
             return None
 
-    # Create and save a new answer since it's either the first or a valid update
+    # Create and save a new answer
     user_answer = UserAnswer(
         user_id=user_id,
         quiz_id=quiz.id,
@@ -388,7 +422,10 @@ def add_answer(
         result_id=result_id
     )
     user_answer.save()
-    print(f"Answer added for user '{user_answer.user.username}' in quiz '{quiz_title}'!")
+    print(
+        f"Answer added for user '{user_answer.user.username}' "
+        f"in quiz '{quiz_title}'!"
+        )
     return user_answer
 
 
@@ -408,19 +445,19 @@ if __name__ == "__main__":
     )
     # Add user
     user_obj = add_user(
-        first_name = "John12",
-        last_name = "Do21e",
-        username = "janes1t2",
-        email = "john.doa1e2@example.com",
-        password = "passa1word1234")
-    
+        first_name="John",
+        last_name="Doe",
+        username="JohnD",
+        email="john.doa1e2@example.com",
+        password="password1234")
+
     user_obj = add_user(
-        first_name = "Adwoa",
-        last_name = "Serwah",
-        username = "AdwoaSK",
-        email = "adwoa@sk.com",
-        password = "1234")
-    
+        first_name="Adwoa",
+        last_name="Serwah",
+        username="AdwoaSK",
+        email="adwoa@sk.com",
+        password="1234")
+
     # Top-level topics
     math = add_topic("Mathematics")
     science = add_topic("Science")
@@ -435,7 +472,6 @@ if __name__ == "__main__":
     subtraction = add_topic(name="Subtraction", parent=arithmetic)
     multiplication = add_topic(name="Multiplication", parent=arithmetic)
     division = add_topic(name="Division", parent=arithmetic)
-
 
     # Subtopics under Science
     physics = add_topic("Physics", science)
@@ -548,7 +584,6 @@ if __name__ == "__main__":
     add_choice_to_question(question_10, "False", True)
     add_choice_to_question(question_10, "no_answer", False)
 
-
     quiz = storage.get_by_value(Quiz, "title", "Basic Subtraction")
     if not quiz:
         print("Quiz 'Basic Subtraction' does not exist!")
@@ -623,7 +658,6 @@ if __name__ == "__main__":
     add_choice_to_question(question_10, "True", False)
     add_choice_to_question(question_10, "False", True)
     add_choice_to_question(question_10, "no_answer", False)
-
 
     # Retrieve the quiz for "Basic Division"
     quiz = storage.get_by_value(Quiz, "title", "Basic Division")
@@ -701,7 +735,6 @@ if __name__ == "__main__":
     add_choice_to_question(question_10, "2", False)
     add_choice_to_question(question_10, "no_answer", False)
 
-
     # Retrieve the quiz for "Basic Multiplication"
     quiz = storage.get_by_value(Quiz, "title", "Basic Multiplication")
     if not quiz:
@@ -778,7 +811,6 @@ if __name__ == "__main__":
     add_choice_to_question(question_10, "110", False)
     add_choice_to_question(question_10, "120", False)
     add_choice_to_question(question_10, "no_answer", False)
-
 
     # Assuming the user 'John Doe' exists in the database
     user = storage.get_by_value(User, "username", "janes1t2")

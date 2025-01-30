@@ -9,32 +9,40 @@ Routes:
     - DELETE /api/v1/quizzes/<quiz_id>: Delete a quiz (admin-only).
     - POST /api/v1/quizzes: Create a new quiz (admin-only).
     - PUT /api/v1/quizzes/<quiz_id>: Update a quiz (admin-only).
-    - GET /api/v1/quizzes/topic/<topic_id>: Fetch quizzes by topic ID.
-    - GET /api/v1/quizzes/topic_name/<name>: Fetch quizzes by topic name.
-    - GET /api/v1/quizzes/<quiz_id>/details: Get a quiz with questions and choices.
-
-Dependencies:
-    - Flask for routing.
-    - Flask-JWT-Extended for authentication.
-    - Models: Quiz, Topic.
-    - Services: Auth and quiz utilities.
+    - GET /api/v1/quizzes/<quiz_id>/questions': Get quiz questions
+    - GET /api/v1/quizzes/<quiz_id>/questions-and-choices: Get quiz questions
+                                                           and choices
+    - GET /api/v1/quizzes/complete: Create a complete quiz
+    - POST /api/v1/start-quiz: Starts a quiz
+    - POST /api/v1/stop-quiz: Stops a quiz
 """
 from api.v1.views import app_views
 from flask import abort, jsonify, request
 from models.quiz import Quiz
 from models import storage
 from flask_jwt_extended import jwt_required
+from api.v1.services.quiz_service import (
+    add_quiz, get_quiz_by_id,
+    update_quiz_by_id,
+    get_questions_for_quiz,
+    validate_time_limit,
+    get_quiz_by_title_helper
+)
 from api.v1.services.auth_service import admin_required
-from api.v1.utils.string_utils import format_text_to_title
-from api.v1.services.quiz_service import add_quiz, get_all_quizzes, get_quiz_by_id, get_quiz_by_title_helper, validate_quiz_title, validate_quiz_description, validate_time_limit, validate_quiz_topic_id, update_quiz_by_id, get_questions_for_quiz
 from api.v1.utils.pagination_utils import get_paginated_data
-from models.topic import Topic
 from models.choice import Choice
 from models.question import Question
 from api.v1.services.result_service import add_result, get_result_by_id
-from api.v1.services.topic_service import add_topic, get_topic_by_name_helper, get_topic_by_id
-from api.v1.services.question_service import add_question, validate_question_text, get_choices_for_question, update_question_by_id
-from api.v1.services.choice_service import validate_choice_text, validate_correct_answers, ensure_no_answer_choice, validate_is_correct, update_choice_by_id, add_choices
+from api.v1.services.topic_service import add_topic, get_topic_by_name_helper
+from api.v1.services.question_service import (
+    add_question, validate_question_text,
+    get_choices_for_question,
+    update_question_by_id
+)
+from api.v1.services.choice_service import (
+    validate_choice_text, validate_is_correct,
+    update_choice_by_id, add_choices
+)
 from datetime import datetime, timezone, timedelta
 from flask.typing import ResponseReturnValue
 from typing import Dict, Any, Tuple, List
@@ -57,7 +65,7 @@ def get_quizzes() -> ResponseReturnValue:
     Query Parameters:
         - page (int): The page number (default is 1).
         - page_size (int): The number of items per page (default is 10).
-    
+
     Returns:
         A JSON object containing:
         - page: Current page number.
@@ -70,8 +78,10 @@ def get_quizzes() -> ResponseReturnValue:
     # Get query parameters with defaults and validate
     try:
         # Convert query parameters to integers with defaults
-        page = int(request.args.get('page', 1))  # Default page is 1
-        page_size = int(request.args.get('page_size', 10))  # Default page_size is 10
+        # Default page is 1
+        page = int(request.args.get('page', 1))
+        # Default page_size is 10
+        page_size = int(request.args.get('page_size', 10))
 
         # Ensure both values are positive integers
         if page <= 0 or page_size <= 0:
@@ -95,18 +105,18 @@ def get_quiz(quiz_id: str = None) -> ResponseReturnValue:
 
     Get a specific quiz by their quiz_id.
     This route retrieves a single quiz based on the provided quiz_id.
-    
+
     Parameters:
         quiz_id (str): The unique identifier for the quiz.
-        
+
     Return:
         A JSON object representing the quiz if found.
         If the quiz is not found, returns a 404 error.
     """
-    # Call the helper function `get_quiz_by_id` to retrieve the quiz by its ID.
+    # Call the helper function to retrieve the quiz by its ID.
     quiz = get_quiz_by_id(quiz_id, storage)
 
-    # If the quiz is not found, abort with a 404 error and message "quiz not found".
+    # If the quiz is not found, abort with a 404 error".
     if quiz is None:
         abort(404, description="Quiz not found")
 
@@ -120,7 +130,8 @@ def handle_no_title() -> ResponseReturnValue:
     abort(400, description="Quiz title is required")
 
 
-@app_views.route('/quizzes/title/<quiz_title>', methods=['GET'], strict_slashes=False)
+@app_views.route('/quizzes/title/<quiz_title>',
+                 methods=['GET'], strict_slashes=False)
 def get_quiz_by_title(quiz_title: str = None) -> ResponseReturnValue:
     """
     GET /api/v1/quizzes/:quiz_title
@@ -130,7 +141,7 @@ def get_quiz_by_title(quiz_title: str = None) -> ResponseReturnValue:
 
     Parameters:
         quiz_title (str): The title of the quiz.
-        
+
     Return:
         A JSON object representing the quiz if found.
         If the quiz is not found, returns a 404 error.
@@ -144,38 +155,49 @@ def get_quiz_by_title(quiz_title: str = None) -> ResponseReturnValue:
     return jsonify(quiz.to_json())
 
 
-@app_views.route('/quizzes/<quiz_id>/questions', methods=['GET'], strict_slashes=False)
+@app_views.route('/quizzes/<quiz_id>/questions',
+                 methods=['GET'], strict_slashes=False)
 @jwt_required()
 def get_quiz_questions(quiz_id: str = None) -> ResponseReturnValue:
     """
-    Get all questions for a specific quiz or a specific question based on its ID,
-    ensuring the user has an in-progress quiz for the specified quiz.
+    Get all questions for a specific quiz or a specific question
+    based on its ID, ensuring the user has an in-progress quiz for
+    the specified quiz.
 
     Args:
         quiz_id: The ID of the quiz whose questions are to be retrieved.
 
     Returns:
-        A JSON response containing either a list of questions (if no question_id is provided)
-        or a single question (if question_id is provided).
+        A JSON response containing either a list of questions
+        (if no question_id is provided) or a single question
+        (if question_id is provided).
     """
     # Get the user ID from the JWT token
     user_id = get_jwt_identity()
     current_user_role = get_jwt()["role"]
 
-
     # Retrieve query parameter for specific question_id (if provided)
     question_id = request.args.get('question_id')
 
     # Check if the user has an in-progress result for the specified quiz
-    result = storage.filter_by(Result, quiz_id=quiz_id, user_id=user_id, status=QuizSessionStatus.IN_PROGRESS)
+    result = storage.filter_by(Result,
+                               quiz_id=quiz_id,
+                               user_id=user_id,
+                               status=QuizSessionStatus.IN_PROGRESS)
     if not result and current_user_role != "admin":
-        abort(403, description="You do not have an in-progress quiz for the specified quiz.")
+        abort(403, description=(
+            "You do not have an in-progress quiz for the "
+            "specified quiz."
+        ))
 
     if question_id:
         # Fetch the specific question if question_id is provided
         question = storage.get(Question, question_id)
         if not question or question.quiz_id != quiz_id:
-            abort(404, description="Question not found or does not belong to the specified quiz.")
+            abort(404, description=(
+                "Question not found or does not belong to the "
+                "specified quiz."
+            ))
 
         # Return the specific question
         return jsonify(question.to_json()), 200
@@ -190,23 +212,26 @@ def get_quiz_questions(quiz_id: str = None) -> ResponseReturnValue:
     return jsonify(question_list), 200
 
 
-@app_views.route('/quizzes/<quiz_id>/questions-and-choices', methods=['GET'], strict_slashes=False)
+@app_views.route('/quizzes/<quiz_id>/questions-and-choices',
+                 methods=['GET'], strict_slashes=False)
 @jwt_required()
 def get_quiz_questions_and_choices(quiz_id: str = None) -> ResponseReturnValue:
     """
-    Get all questions and their choices for a specific quiz, or a single question with its choices
-    if question_id is provided, ensuring the user has an in-progress quiz for the specified quiz.
+    Get all questions and their choices for a specific quiz,
+    or a single question with its choices if question_id is provided,
+    ensuring the user has an in-progress quiz for the specified quiz.
 
     Args:
         quiz_id: The ID of the quiz.
-    
+
     Query Parameters:
         question_id: (Optional) The ID of a specific question to retrieve.
 
     Returns:
         A JSON response containing either:
         - A single question and its choices (if question_id is provided).
-        - All questions and their choices for the quiz (if question_id is not provided).
+        - All questions and their choices for the quiz
+          (if question_id is not provided).
     """
     # Get the user ID from the JWT token
     user_id = get_jwt_identity()
@@ -216,15 +241,25 @@ def get_quiz_questions_and_choices(quiz_id: str = None) -> ResponseReturnValue:
     question_id = request.args.get('question_id')
 
     # Check if the user has an in-progress result for the specified quiz
-    result = storage.filter_by(Result, quiz_id=quiz_id, user_id=user_id, status=QuizSessionStatus.IN_PROGRESS)
+    result = storage.filter_by(Result,
+                               quiz_id=quiz_id,
+                               user_id=user_id,
+                               status=QuizSessionStatus.IN_PROGRESS)
+
     if not result and current_user_role != "admin":
-        abort(403, description="You do not have an in-progress quiz for the specified quiz.")
+        abort(403, description=(
+            "You do not have an in-progress quiz for the "
+            "specified quiz."
+        ))
 
     if question_id:
         # Fetch the specific question
         question = storage.get(Question, question_id)
         if not question or question.quiz_id != quiz_id:
-            abort(404, description="Question not found or does not belong to the specified quiz.")
+            abort(404, description=(
+                "Question not found or does not belong to the "
+                "specified quiz."
+            ))
 
         # Fetch and include choices for the specific question
         choices = get_choices_for_question(question_id, storage)
@@ -244,8 +279,8 @@ def get_quiz_questions_and_choices(quiz_id: str = None) -> ResponseReturnValue:
     return jsonify(question_list), 200
 
 
-
-@app_views.route('/quizzes/<quiz_id>', methods=['DELETE'], strict_slashes=False)
+@app_views.route('/quizzes/<quiz_id>',
+                 methods=['DELETE'], strict_slashes=False)
 @jwt_required()
 @admin_required
 def delete_quiz(quiz_id: str = None) -> ResponseReturnValue:
@@ -253,14 +288,16 @@ def delete_quiz(quiz_id: str = None) -> ResponseReturnValue:
     DELETE /api/v1/quizzes/:id
 
     Delete a specific quiz by their quiz_id.
-    This route deletes a quiz after verifying the identity of the quiz making the request.
-    
+    This route deletes a quiz after verifying the identity of
+    the quiz making the request.
+
     Parameters:
         quiz_id (str): The unique identifier of the quiz to be deleted.
-        
+
     Return:
         A JSON response indicating whether the deletion was successful.
-        If the quiz does not exist or the current quiz is unauthorized, it returns an error.
+        If the quiz does not exist or the current quiz is unauthorized,
+        it returns an error.
     """
     quiz = get_quiz_by_id(quiz_id, storage)
 
@@ -282,17 +319,20 @@ def create_quiz() -> ResponseReturnValue:
     POST /api/v1/quizzes/
 
     Create a new quiz.
-    This route allows admins to create a new quiz by accepting the necessary information 
-    in a JSON payload. The input is validated, and duplicate quizzes or invalid data are rejected.
+    This route allows admins to create a new quiz by accepting
+    the necessary information in a JSON payload. The input is validated,
+    and duplicate quizzes or invalid data are rejected.
 
     JSON body:
         - title (str): The title of the quiz (must be unique and not empty).
         - description (Optional[str]): A brief description of the quiz.
         - time_limit (int): The time limit for the quiz in seconds.
-        - topic_id (Optional[str]): The ID of the topic associated with this quiz (can be empty).
+        - topic_id (Optional[str]): The ID of the topic associated with
+          this quiz (can be empty).
 
     Return:
-        A JSON response with the created quiz object or error messages for invalid input.
+        A JSON response with the created quiz object or error messages
+        for invalid input.
     """
     # Ensure request data is JSON
     if not request.get_json():
@@ -313,9 +353,9 @@ def update_quiz(quiz_id: str = None) -> ResponseReturnValue:
 
     Update an existing quiz.
 
-    This route allows admins to update an existing quiz by providing updated 
-    information in a JSON payload. Validations ensure updates are consistent with 
-    the business rules.
+    This route allows admins to update an existing quiz by providing updated
+    information in a JSON payload. Validations ensure updates are consistent
+    with the business rules.
 
     URL Params:
         - quiz_id (str): The ID of the quiz to update.
@@ -323,11 +363,12 @@ def update_quiz(quiz_id: str = None) -> ResponseReturnValue:
     JSON body:
         - title (Optional[str]): The new title of the quiz.
         - description (Optional[str]): The new description of the quiz.
-        - time_limit (Optional[int]): The new time limit for the quiz in seconds.
+        - time_limit (Optional[int]): The new time limit for quiz in seconds.
         - topic_id (Optional[str]): The new topic ID associated with the quiz.
 
     Returns:
-        A JSON response with the updated quiz object or error messages for invalid input.
+        A JSON response with the updated quiz object or error messages
+        for invalid input.
     """
     # Ensure request data is JSON
     if not request.get_json():
@@ -344,12 +385,16 @@ def update_quiz(quiz_id: str = None) -> ResponseReturnValue:
 @admin_required
 def create_complete_quiz() -> ResponseReturnValue:
     """
-    Create a complete quiz with optional topic, quiz details, questions, and choices.
+    Create a complete quiz with optional topic, quiz details,
+    questions, and choices.
 
     Request JSON Body:
         {
-            "topic": { "name": "Topic Name", "parent_id": "Parent Topic ID (optional)" },
-            "quiz": { "title": "Quiz Title", "description": "Quiz Description", "time_limit": 12 },
+            "topic": { "name": "Topic Name",
+                       "parent_id": "Parent Topic ID (optional)" },
+            "quiz": { "title": "Quiz Title",
+                      "description": "Quiz Description",
+                      "time_limit": 12 },
             "questions": [
                 {
                     "question_text": "Question 1 text",
@@ -374,16 +419,21 @@ def create_complete_quiz() -> ResponseReturnValue:
     questions_data = data.get('questions', [])
 
     # Validate Quiz data
-    if not quiz_data or 'title' not in quiz_data or 'time_limit' not in quiz_data:
-        abort(400, description="Quiz details must include 'title' and 'time_limit'")
+    if not quiz_data or \
+        'title' not in quiz_data or \
+            'time_limit' not in quiz_data:
+        abort(400,
+              description="Quiz details must include 'title' and 'time_limit'")
 
     # Create or retrieve topics in order
-    last_topic_id = None  # This will hold the parent ID for the next topic
+    # This will hold the parent ID for the next topic
+    last_topic_id = None
     for index, topic_name in enumerate(topics):
         topic = get_topic_by_name_helper(topic_name, storage)
-        
+
         if topic:  # Topic exists in the database
-            # Use the existing topic's parent_id as the parent for the current topic
+            # Use the existing topic's parent_id as the parent
+            # for the current topic
             if index != 0 and topic.parent_id != last_topic_id:
                 topic.parent_id = last_topic_id
                 topic.updated_at = datetime.now(timezone.utc)
@@ -407,13 +457,15 @@ def create_complete_quiz() -> ResponseReturnValue:
     # Validate time_limit
     time_limit = quiz_data.get('time_limit')
     validate_time_limit(time_limit)
-    
+
     # Check if the quiz title already exists
     existing_quiz = get_quiz_by_title_helper(quiz_data['title'], storage)
 
     if existing_quiz:
         quiz_data['topic_id'] = last_topic_id
-        quiz_response, _ = update_quiz_by_id(quiz_data, storage, existing_quiz.id)
+        quiz_response, _ = update_quiz_by_id(quiz_data,
+                                             storage,
+                                             existing_quiz.id)
         quiz = quiz_response.get_json().get('quiz')
         print(quiz)
     else:
@@ -427,29 +479,43 @@ def create_complete_quiz() -> ResponseReturnValue:
     for question_data in questions_data:
         question_text = question_data.get('question_text')
         question_text = validate_question_text(question_text)
-        
+
         # Check for existing question in the same quiz
-        existing_question = storage.filter_by(Question, quiz_id=quiz['id'], question_text=question_text)
+        existing_question = storage.filter_by(Question,
+                                              quiz_id=quiz['id'],
+                                              question_text=question_text)
         if existing_question:
-            question_response, _ = update_question_by_id(question_data, storage, existing_question[0].id)
+            question_response, _ = update_question_by_id(
+                question_data, storage, existing_question[0].id
+            )
             question = question_response.get_json().get('question')
         else:
             # Create the question
             question_response, _ = add_question({
                 'quiz_id': quiz['id'],
                 'question_text': question_text,
-                'allow_multiple_answers': question_data.get('allow_multiple_answers', False)
+                'allow_multiple_answers': question_data.get(
+                    'allow_multiple_answers', False
+                )
             }, storage)
             question = question_response.get_json().get('question')
 
         # Add Choices to the Question
         choices_data = question_data.get('choices', [])
         # Retrieving existing choices for the question if any
-        existing_choices = storage.filter_by(Choice, question_id=question['id'])
+        existing_choices = storage.filter_by(Choice,
+                                             question_id=question['id'])
 
         # Collect existing choice texts and choices themselves
-        existing_choice_texts = [choice.choice_text for choice in existing_choices]
-        existing_choices_dict = {choice.choice_text: choice for choice in existing_choices}
+        existing_choice_texts = [
+            choice.choice_text
+            for choice in existing_choices
+        ]
+
+        existing_choices_dict = {
+            choice.choice_text: choice
+            for choice in existing_choices
+        }
 
         existing_choices_data = []
         new_choices_data = []
@@ -457,7 +523,10 @@ def create_complete_quiz() -> ResponseReturnValue:
         # Process and classify choices as new or existing
         for choice in choices_data:
             is_correct = choice.get('is_correct', False)
-            choice['choice_text'] = validate_choice_text(choice.get('choice_text'))
+            choice['choice_text'] = validate_choice_text(
+                choice.get('choice_text')
+            )
+
             validate_is_correct(is_correct)
             choice['is_correct'] = is_correct
             if choice['choice_text'] in existing_choice_texts:
@@ -475,8 +544,10 @@ def create_complete_quiz() -> ResponseReturnValue:
 
         # Update existing choices
         for existing_choice_data in existing_choices_data:
-            choice = existing_choices_dict[existing_choice_data['choice_text']]  # Get choice directly from dictionary
-            _, _ = update_choice_by_id(existing_choice_data, storage, choice.id)
+            # Get choice directly from dictionary
+            choice = existing_choices_dict[existing_choice_data['choice_text']]
+            _, _ = update_choice_by_id(existing_choice_data,
+                                       storage, choice.id)
 
     return jsonify({
         'message': 'Complete quiz created successfully',
@@ -490,21 +561,25 @@ def start_quiz() -> ResponseReturnValue:
     """
     Start a quiz attempt for a user.
 
-    This route initializes a new quiz session for the user, checks if the quiz exists,
-    ensures the user hasn't exceeded the maximum number of attempts for the quiz on the same day,
+    This route initializes a new quiz session for the user,
+    checks if the quiz exists, ensures the user hasn't exceeded
+    the maximum number of attempts for the quiz on the same day,
     and ensures the user doesn't already have another quiz in progress.
 
     Returns:
-        Tuple: A JSON response with the details of the quiz attempt and an HTTP status code.
+        Tuple: A JSON response with the details of the quiz attempt
+               and an HTTP status code.
             - result_id (str): The ID of the quiz result record.
             - quiz_id (str): The ID of the quiz being attempted.
             - time_limit (int): The time limit for the quiz (in minutes).
             - start_time (str): The timestamp when the quiz attempt started.
-            - status (str): The current status of the quiz attempt (in_progress).
+            - status (str): The current status of the quiz attempt
+                            (in_progress).
 
     Raises:
         404: If the quiz is not found in the database.
-        400: If the user has exceeded the maximum number of attempts for the quiz today
+        400: If the user has exceeded the maximum number of attempts
+             for the quiz today
              or already has another quiz in progress.
     """
     # Ensure request data is JSON
@@ -514,7 +589,6 @@ def start_quiz() -> ResponseReturnValue:
     # Get the user ID from the JWT token
     user_id = get_jwt_identity()
     current_user_role = get_jwt()["role"]
-
 
     # Get the quiz ID from the request body
     quiz_id = request.json.get('quiz_id')
@@ -536,22 +610,26 @@ def start_quiz() -> ResponseReturnValue:
                                          status=QuizSessionStatus.IN_PROGRESS)
 
     if in_progress_quiz and current_user_role != "admin":
-        abort(400, description="You already have an in-progress quiz. Please complete it before starting another quiz.")
+        abort(400, description=(
+            "You already have an in-progress quiz. "
+            "Please complete it before starting "
+            "another quiz."
+        ))
 
     # Check the number of attempts the user has made today for this quiz
-    attempts_today = Result.get_attempt_number(storage, user_id, quiz_id, filter_by_date=True)
+    attempts_today = Result.get_attempt_number(storage,
+                                               user_id, quiz_id,
+                                               filter_by_date=True)
     # Check the number of attempts the user has made today for this quiz
-    """attempts_today = Result.get_attempt_number(
-        storage=storage,  # Pass the storage instance
-        user_id=user_id,
-        quiz_id=quiz_id,
-        filter_by_date=True  # Only count today's attempts
-    )"""
     print(f"Total attempts today: {attempts_today}")
     max_attempts_per_day = 3  # Set your max attempts per day limit
 
     if attempts_today >= max_attempts_per_day and current_user_role != "admin":
-        abort(400, description=f"You've reached the maximum number of attempts ({max_attempts_per_day}) for this quiz for today.")
+        abort(400, description=(
+            "You've reached the maximum number of attempts"
+            f" ({max_attempts_per_day}) "
+            "for this quiz for today."
+        ))
 
     # Create a result record for this quiz attempt
     data = {
@@ -564,26 +642,14 @@ def start_quiz() -> ResponseReturnValue:
     result_id = result_data.get('id')
     status = result_data.get('status')
     start_time = result_data.get('start_time')
-    #start_time_str = datetime.fromisoformat(start_time_str)  # Convert string to datetime object
-    #start_time_iso = start_time.isoformat()  # Now call isoformat()
-    # start_time = result_data.get('start_time').isoformat()
-    # last_topic_id = topic_response.get_json().get('topic')['id']
-    """result = Result(
-        user_id=user_id,
-        quiz_id=quiz_id,
-        status=QuizSessionStatus.IN_PROGRESS.value,  # Use enum value explicitly
-        start_time=datetime.now(timezone.utc),
-    )
-    storage.new(result)
-    storage.save()"""
 
     # Include the time limit in the response
     response = {
         "result_id": result_id,
         "quiz_id": quiz.id,
-        "time_limit": quiz.time_limit,  # Add the time limit (in minutes)
-        "start_time": start_time,  # Format start time as ISO string
-        "status": status,  # The status of the quiz (initially 'in-progress')
+        "time_limit": quiz.time_limit,
+        "start_time": start_time,
+        "status": status,
     }
 
     # Return the response with status code 201 (Created)
@@ -594,14 +660,34 @@ def start_quiz() -> ResponseReturnValue:
 @jwt_required()
 def stop_quiz():
     """
-    End the quiz, update the necessary result details (minus score calculations).
+    Ends the quiz for a user, updating the necessary result details,
+    including the status and time taken. The result status is updated
+    to either 'TIMED_OUT' if the time limit has expired or 'COMPLETED'
+    if the quiz was finished before the time limit. The function calculates
+    the time taken for the quiz and updates the result with the
+    completion time.
+
+    The following conditions must be met for the quiz to be stopped:
+    - The request must contain valid JSON data.
+    - The user must be authenticated via JWT.
+    - The user must be either the one who started the quiz or an admin.
+    - The quiz status must be 'in-progress' for non-admin users.
+
+    If any conditions are not met, appropriate errors (e.g., 400, 403, 404)
+    are returned.
+
+    Returns:
+        Response (JSON): A JSON object containing the quiz title,
+        result ID, status, time limit, completion time, and date of result
+        creation.
     """
     # Ensure request data is JSON
     if not request.get_json():
         abort(400, description="No JSON data provided in the request!")
 
     # Get the current time
-    current_time = datetime.now(timezone.utc)  # Use time zone-aware current time
+    # Use time zone-aware current time
+    current_time = datetime.now(timezone.utc)
     if current_time.tzinfo is None:
         current_time = current_time.replace(tzinfo=timezone.utc)
     user_id = get_jwt_identity()  # Get the user ID from the JWT token
@@ -614,15 +700,17 @@ def stop_quiz():
     if not result:
         abort(404, description="Result not found")
 
-    # Check if the user ID from the JWT matches the user ID associated with the result
+    # Check if the user ID from the JWT matches the user ID
+    # associated with the result
     if result.user_id != user_id and current_user_role != "admin":
         abort(403, description="You are not authorized to stop this quiz.")
 
     # Check if the quiz status is in-progress
-    if result.status.value not in ["in-progress"] and current_user_role != "admin":
+    result_status = result.status.value
+    if result_status not in ["in-progress"] and current_user_role != "admin":
         abort(400, description="Quiz has already been completed or timed out.")
 
-    # Fetch the associated quiz from the result object (no need for another storage call)
+    # Fetch the associated quiz from the result object
     quiz = result.quiz
     print(f"result.quiz: {result.quiz}")
     if not quiz:
@@ -633,8 +721,9 @@ def stop_quiz():
         result.start_time = result.start_time.replace(tzinfo=timezone.utc)
 
     # Check if the quiz time has expired
-    time_limit_expired = current_time > (result.start_time + timedelta(minutes=quiz.time_limit))
-
+    time_limit_expired = current_time > (
+        result.start_time + timedelta(minutes=quiz.time_limit)
+    )
 
     # Determine the result status
     if time_limit_expired:
@@ -642,22 +731,22 @@ def stop_quiz():
     else:
         result.status = QuizSessionStatus.COMPLETED
 
-    # Calculate completion time (time difference between submitted_at and start_time)
-    completion_time_seconds = (current_time - result.start_time).total_seconds()
+    # Calculate completion time
+    # (time difference between submitted_at and start_time)
+    completion_time_seconds = (
+        (current_time - result.start_time).total_seconds()
+    )
+
     completion_time_minutes = round(completion_time_seconds / 60)
 
     # Update the result object to mark the quiz as ended
-    result.submitted_at = current_time  # Timestamp when the quiz is stopped
-    result.end_time = datetime.now(timezone.utc)  # End time of the quiz
-    result.time_taken = completion_time_seconds  # Total time taken in seconds
-    result.updated_at = datetime.now(timezone.utc)  # Updated timestamp
+    result.submitted_at = current_time
+    result.end_time = datetime.now(timezone.utc)
+    result.time_taken = completion_time_seconds
+    result.updated_at = datetime.now(timezone.utc)
 
     # Save the updated result
     storage.save()
-    print(f"result.start_time: {result.start_time}")
-    print(f"current_time: {current_time}")
-    print(f"{current_time} - {result.start_time} = {current_time - result.start_time}")
-    print(f"completion_time_seconds: {completion_time_seconds}")
 
     # Final response indicating the quiz has been stopped
     return jsonify({
@@ -665,6 +754,6 @@ def stop_quiz():
         "result_id": result.id,
         "status": result.status.value,
         "time_limit": f"{quiz.time_limit} minutes",
-        "completion_time": f"{completion_time_minutes} minutes",  # Display time taken
+        "completion_time": f"{completion_time_minutes} minutes",
         "date": result.created_at.strftime("%d-%m-%y")
     }), 200

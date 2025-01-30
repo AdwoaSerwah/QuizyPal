@@ -12,7 +12,7 @@ from flask.typing import ResponseReturnValue
 
 @app_views.route('/unauthorized', methods=['GET'], strict_slashes=False)
 def authorized() -> ResponseReturnValue:
-    """ 
+    """
     Raise a 401 error
     """
     abort(401, description="Unauthorized")
@@ -63,7 +63,7 @@ def home() -> ResponseReturnValue:
 def protected() -> ResponseReturnValue:
     """Get the current user ID from the token"""
     current_user_id = get_jwt_identity()
-    
+
     return jsonify(logged_in_as=current_user_id)
 
 

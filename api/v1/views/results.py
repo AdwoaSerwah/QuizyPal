@@ -6,6 +6,7 @@ This module defines routes for managing results, including:
 - Creating new results
 - Updating existing results
 - Deleting results
+- Retrieving result feedback
 
 Some routes are protected by JWT authentication, with the
 option for role-based access control.
@@ -15,11 +16,12 @@ from flask import abort, jsonify, request
 from models import storage
 from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
 from api.v1.services.auth_service import admin_required
-from api.v1.services.result_service import get_result_by_id, add_result, update_result_by_id, calculate_feedback
+from api.v1.services.result_service import get_result_by_id, add_result
+from api.v1.services.result_service import update_result_by_id
+from api.v1.services.result_service import calculate_feedback
 from api.v1.utils.pagination_utils import get_paginated_data
 from api.v1.services.quiz_service import get_quiz_by_id
 from datetime import datetime, timezone
-from typing import List, Dict
 from flask.typing import ResponseReturnValue
 from models.question import Question
 from models.result import Result
@@ -41,7 +43,7 @@ def get_results() -> ResponseReturnValue:
     Query Parameters:
         - page (int): The page number (default is 1).
         - page_size (int): The number of items per page (default is 10).
-    
+
     Returns:
         A JSON object containing:
         - page: Current page number.
@@ -54,8 +56,10 @@ def get_results() -> ResponseReturnValue:
     # Get query parameters with defaults and validate
     try:
         # Convert query parameters to integers with defaults
-        page = int(request.args.get('page', 1))  # Default page is 1
-        page_size = int(request.args.get('page_size', 10))  # Default page_size is 10
+        # Default page is 1
+        page = int(request.args.get('page', 1))
+        # Default page_size is 10
+        page_size = int(request.args.get('page_size', 10))
 
         # Ensure both values are positive integers
         if page <= 0 or page_size <= 0:
@@ -65,7 +69,8 @@ def get_results() -> ResponseReturnValue:
         abort(400, description="page and page_size must be positive integers")
 
     # Use the helper function to get paginated results
-    result = get_paginated_data(storage, Result, page=page, page_size=page_size)
+    result = get_paginated_data(storage, Result,
+                                page=page, page_size=page_size)
 
     # Change the "data" key to "results"
     result["results"] = result.pop("data")
@@ -80,18 +85,18 @@ def get_result(result_id: str = None) -> ResponseReturnValue:
 
     Get a specific result by their result_id.
     This route retrieves a single result based on the provided result_id.
-    
+
     Parameters:
         result_id (str): The unique identifier for the result.
-        
+
     Return:
         A JSON object representing the result if found.
         If the result is not found, returns a 404 error.
     """
-    # Call the helper function `get_result_by_id` to retrieve the result by its ID.
+    # Call the helper function to retrieve the result by its ID.
     result = get_result_by_id(result_id, storage)
 
-    # If the result is not found, abort with a 404 error and message "result not found".
+    # If the result is not found, abort with a 404 error.
     if result is None:
         abort(404, description="Result not found")
 
@@ -99,28 +104,31 @@ def get_result(result_id: str = None) -> ResponseReturnValue:
     current_user_id = get_jwt_identity()
     current_user_role = get_jwt()["role"]
 
-    # Check if the current user is an admin or if they are trying to delete their own account
+    # Check if the current user is an admin or
+    # if they are trying to delete their own account
     if current_user_role != "admin" and result.user_id != current_user_id:
-        abort(403, description="You are not authorized to retrieve this result.")
+        abort(403,
+              description="You are not authorized to retrieve this result.")
 
     # If the result is found, return it as a JSON object.
     return jsonify(result.to_json())
 
 
-@app_views.route('/results/<result_id>', methods=['DELETE'], strict_slashes=False)
+@app_views.route('/results/<result_id>',
+                 methods=['DELETE'], strict_slashes=False)
 @jwt_required()
 @admin_required
 def delete_result(result_id: str = None) -> ResponseReturnValue:
     """
     DELETE /api/v1/results/<result_id>
-    
-    Delete a specific result by its ID. This route is restricted to admin users.
-    
+
+    Delete a specific result by its ID. This route is restricted to admins.
+
     Args:
         result_id (str): The unique identifier of the result to be deleted.
-        
+
     Returns:
-        Response: A JSON response indicating whether the deletion was successful.
+        Response: A JSON response indicating if the deletion was successful.
                   If the result does not exist, returns a 404 error.
     """
     # Fetch the result from the database
@@ -146,23 +154,21 @@ def create_result() -> ResponseReturnValue:
     Create a new result (quiz attempt) for a user.
     This route is used by admins to manually create results for users.
 
-    Parameters:
-        None (result will be created based on the data sent in the request body).
-        
     Return:
         A JSON response containing the created result's data.
     """
     # Ensure request data is JSON
     if not request.get_json():
         abort(400, description="No JSON data provided in the request!")
-    # Parse the request data (this would typically come from the client submission)
+    # Parse the request data
     data = request.get_json()
 
     # Delegate result creation to the helper function
     return add_result(data, storage)
 
 
-@app_views.route('/results/<result_id>', methods=['PUT'], strict_slashes=False)
+@app_views.route('/results/<result_id>',
+                 methods=['PUT'], strict_slashes=False)
 @jwt_required()
 @admin_required
 def update_result(result_id: str = None) -> ResponseReturnValue:
@@ -172,10 +178,11 @@ def update_result(result_id: str = None) -> ResponseReturnValue:
 
     Parameters:
         result_id (str): The unique identifier of the result to be updated.
-        
+
     Return:
         A JSON response indicating whether the update was successful.
-        If the result does not exist or the current result is unauthorized, it returns an error.
+        If the result does not exist or the current result is unauthorized,
+        it returns an error.
     """
     # Ensure request data is JSON
     if not request.get_json():
@@ -187,12 +194,14 @@ def update_result(result_id: str = None) -> ResponseReturnValue:
     return update_result_by_id(data, storage, result_id)
 
 
-@app_views.route('/results/<result_id>/feedback', methods=['GET'], strict_slashes=False)
+@app_views.route('/results/<result_id>/feedback',
+                 methods=['GET'], strict_slashes=False)
 @jwt_required()
 def get_result_feedback(result_id: str) -> ResponseReturnValue:
     """
     GET /api/v1/results/:result_id/feedback/
-    Retrieve feedback for a completed quiz based on the user's answers and overall performance.
+    Retrieve feedback for a completed quiz based on the user's
+    answers and overall performance.
 
     Parameters:
         result_id (str): The unique identifier of the result (quiz attempt).
@@ -200,7 +209,8 @@ def get_result_feedback(result_id: str) -> ResponseReturnValue:
     Return:
         A JSON response containing the quiz feedback.
     """
-    user_id = get_jwt_identity()  # Get the user ID from the JWT token
+    # Get the user ID from the JWT token
+    user_id = get_jwt_identity()
     current_user_role = get_jwt()["role"]
 
     # Fetch the result object
@@ -208,10 +218,10 @@ def get_result_feedback(result_id: str) -> ResponseReturnValue:
     if not result:
         abort(404, description="Result not found")
 
-    # Check if the user ID from the JWT matches the user ID associated with the result
+    # Check if the user ID from the JWT matches the user ID
+    # associated with the result
     if result.user_id != user_id and current_user_role != "admin":
         abort(403, description="You are not authorized to stop this quiz.")
-
 
     # Check if the quiz status is completed or timed-out
     if result.status.value not in ["completed", "timed-out"]:
@@ -230,11 +240,14 @@ def get_result_feedback(result_id: str) -> ResponseReturnValue:
 
     # Fetch all user answers for this result
     user_answers = storage.filter_by(UserAnswer, result_id=result_id)
-    user_answers_map = {answer.question_id: answer.choice_id for answer in user_answers}
+    user_answers_map = {}
+    for answer in user_answers:
+        user_answers_map[answer.question_id] = answer.choice_id
 
     # Initialize variables
     total_score = 0
-    max_score = len(all_questions)  # Assume each question is worth 1 point
+    # Assume each question is worth 1 point
+    max_score = len(all_questions)
     unanswered_questions = []
     answers_details = []
     correct_answers = 0
@@ -242,21 +255,38 @@ def get_result_feedback(result_id: str) -> ResponseReturnValue:
 
     # Check each question and calculate score
     for question in all_questions:
-        correct_choices = [choice.id for choice in question.choices if choice.is_correct]
+        correct_choices = [
+            choice.id
+            for choice in question.choices
+            if choice.is_correct
+        ]
+
         user_choice_id = user_answers_map.get(question.id)
         points_awarded = 0
         is_correct = False
 
         if question.allow_multiple_answers:
             correct_answers_count = len(correct_choices)
-            points_per_correct_answer = 1 / correct_answers_count  # Partial scoring for multiple correct answers
+            # Partial scoring for multiple correct answers
+            points_per_correct_answer = 1 / correct_answers_count
 
             # User's selected choices
-            user_selected_choices = storage.filter_by(UserAnswer, result_id=result_id, question_id=question.id)
-            user_selected_choice_ids = [answer.choice_id for answer in user_selected_choices]
+            user_selected_choices = storage.filter_by(UserAnswer,
+                                                      result_id=result_id,
+                                                      question_id=question.id)
+
+            user_selected_choice_ids = [
+                answer.choice_id
+                for answer in user_selected_choices
+            ]
 
             # Calculate points based on user's correct selections
-            correct_selections = sum(1 for choice_id in user_selected_choice_ids if choice_id in correct_choices)
+            correct_selections = sum(
+                1
+                for choice_id in user_selected_choice_ids
+                if choice_id in correct_choices
+            )
+
             points_awarded = correct_selections * points_per_correct_answer
             total_score += points_awarded
 
@@ -282,8 +312,17 @@ def get_result_feedback(result_id: str) -> ResponseReturnValue:
         answers_details.append({
             "question_order_number": question.order_number,
             "question_text": question.question_text,
-            "user_choice": "no_answer" if user_choice_id is None else storage.get(Choice, user_choice_id).choice_text,
-            "correct_choice": ", ".join([storage.get(Choice, c_id).choice_text for c_id in correct_choices]),
+            "user_choice": (
+                "no_answer"
+                if user_choice_id is None
+                else storage.get(Choice, user_choice_id).choice_text
+            ),
+            "correct_choice": ", ".join(
+                [
+                    storage.get(Choice, c_id).choice_text
+                    for c_id in correct_choices
+                ]
+            ),
             "points_awarded": round(points_awarded, 2),
         })
 
@@ -296,7 +335,8 @@ def get_result_feedback(result_id: str) -> ResponseReturnValue:
     completion_time_minutes = round(result.time_taken / 60)
 
     # Compare the calculated score with the current result.score
-    if result.score != total_score:  # If the calculated score is different, update it
+    # If the calculated score is different, update it
+    if result.score != total_score:
         result.score = total_score
         result.updated_at = datetime.now(timezone.utc)
         storage.save()
@@ -311,10 +351,8 @@ def get_result_feedback(result_id: str) -> ResponseReturnValue:
         "status": result.status.value,
         "correct_answers": correct_answers,
         "incorrect_answers": incorrect_answers,
-        "no_answers": len(unanswered_questions),  # Count of unanswered questions
-        "total_questions": max_score,  # Total number of questions
+        "no_answers": len(unanswered_questions),
+        "total_questions": max_score,
         "percentage": f"{round(percentage, 2)}%",
         "answers": answers_details
     }), 200
-
-

@@ -1,19 +1,44 @@
+#!/usr/bin/env python3
+"""
+Choice API Endpoints
+
+This module defines the Flask routes for managing quiz choices
+in the QuizyPal API.
+
+It includes endpoints for:
+- Retrieving choices with pagination
+- Getting a specific choice by ID
+- Deleting a choice with validation
+- Creating multiple choices
+- Updating an existing choice
+
+All routes require authentication and admin privileges.
+
+Routes:
+- GET /choices
+- GET /choices/<choice_id>
+- DELETE /choices/<choice_id>
+- POST /choices
+- PUT /choices/<choice_id>
+
+Dependencies:
+- Flask
+- Flask-JWT-Extended for authentication
+- Models and services for handling database operations
+"""
 from api.v1.views import app_views
 from flask import abort, jsonify, request
-from models.question import Question
 from models import storage
 from flask_jwt_extended import jwt_required
-from flasgger.utils import swag_from
 from api.v1.services.auth_service import admin_required
-from api.v1.utils.string_utils import format_text_to_title
 from api.v1.utils.pagination_utils import get_paginated_data
-from models.topic import Topic
 from models.choice import Choice
-from api.v1.services.choice_service import get_choice_by_id, add_choices, update_choice_by_id, validate_correct_answers
 from api.v1.services.question_service import get_question_by_id
-from datetime import datetime, timezone
-from typing import List, Dict, Tuple
 from flask.typing import ResponseReturnValue
+from api.v1.services.choice_service import (
+    get_choice_by_id, add_choices,
+    update_choice_by_id, validate_correct_answers
+)
 
 
 @app_views.route('/choices', methods=['GET'], strict_slashes=False)
@@ -30,7 +55,7 @@ def get_choices() -> ResponseReturnValue:
     Query Parameters:
         - page (int): The page number (default is 1).
         - page_size (int): The number of items per page (default is 10).
-    
+
     Returns:
         A JSON object containing:
         - page: Current page number.
@@ -43,8 +68,10 @@ def get_choices() -> ResponseReturnValue:
     # Get query parameters with defaults and validate
     try:
         # Convert query parameters to integers with defaults
-        page = int(request.args.get('page', 1))  # Default page is 1
-        page_size = int(request.args.get('page_size', 10))  # Default page_size is 10
+        # Default page is 1
+        page = int(request.args.get('page', 1))
+        # Default page_size is 10
+        page_size = int(request.args.get('page_size', 10))
 
         # Ensure both values are positive integers
         if page <= 0 or page_size <= 0:
@@ -54,7 +81,8 @@ def get_choices() -> ResponseReturnValue:
         abort(400, description="page and page_size must be positive integers")
 
     # Use the helper function to get paginated choices
-    result = get_paginated_data(storage, Choice, page=page, page_size=page_size)
+    result = get_paginated_data(storage, Choice,
+                                page=page, page_size=page_size)
 
     # Change the "data" key to "choices"
     result["choices"] = result.pop("data")
@@ -70,18 +98,18 @@ def get_choice(choice_id: str = None) -> ResponseReturnValue:
 
     Get a specific choice by their choice_id.
     This route retrieves a single choice based on the provided choice_id.
-    
+
     Parameters:
         choice_id (str): The unique identifier for the choice.
-        
+
     Return:
         A JSON object representing the choice if found.
         If the choice is not found, returns a 404 error.
     """
-    # Call the helper function `get_choice_by_id` to retrieve the choice by its ID.
+    # Call the helper function to retrieve the choice by its ID.
     choice = get_choice_by_id(choice_id, storage)
 
-    # If the choice is not found, abort with a 404 error and message "choice not found".
+    # If the choice is not found, abort with a 404 error".
     if choice is None:
         abort(404, description="Choice not found")
 
@@ -89,7 +117,8 @@ def get_choice(choice_id: str = None) -> ResponseReturnValue:
     return jsonify(choice.to_json())
 
 
-@app_views.route('/choices/<choice_id>', methods=['DELETE'], strict_slashes=False)
+@app_views.route('/choices/<choice_id>',
+                 methods=['DELETE'], strict_slashes=False)
 @jwt_required()
 @admin_required
 def delete_choice(choice_id: str = None) -> ResponseReturnValue:
@@ -97,14 +126,17 @@ def delete_choice(choice_id: str = None) -> ResponseReturnValue:
     DELETE /api/v1/choices/:id
 
     Delete a specific choice by their choice_id.
-    This route deletes a choice after verifying the identity of the choice making the request.
-    
+    This route deletes a choice after verifying the
+    identity of the choice making the request.
+
     Parameters:
-        choice_id (str): The unique identifier of the choice to be deleted.
-        
+        choice_id (str): The unique identifier of the choice
+        to be deleted.
+
     Return:
         A JSON response indicating whether the deletion was successful.
-        If the choice does not exist or the current choice is unauthorized, it returns an error.
+        If the choice does not exist or the current choice is unauthorized,
+        it returns an error.
     """
     choice = get_choice_by_id(choice_id, storage)
 
@@ -125,15 +157,23 @@ def delete_choice(choice_id: str = None) -> ResponseReturnValue:
     if existing_choices:
         if not isinstance(existing_choices, list):
             existing_choices = [existing_choices]
-        
-    existing_choices = [ch for ch in existing_choices if ch.choice_text != "no_answer" and ch.id != choice.id]
+
+    existing_choices = [
+        ch for ch in existing_choices
+        if ch.choice_text != "no_answer" and ch.id != choice.id
+    ]
 
     if len(existing_choices) < 2:
-        abort(404, description="There must be at least two valid choices for a question")
+        abort(404, description=(
+            "There must be at least two valid choices for a question"
+        ))
 
     allow_multiple_answers = question.allow_multiple_answers
     # Validate if the deletion would cause any issues with the correct answers
-    validate_correct_answers(existing_choices, False, allow_multiple_answers, question.question_text)
+    validate_correct_answers(existing_choices,
+                             False,
+                             allow_multiple_answers,
+                             question.question_text)
 
     # Proceed with deletion if no validation issues
     choice.delete()
@@ -150,11 +190,13 @@ def create_choices() -> ResponseReturnValue:
     POST /api/v1/choices/
 
     Create a new choice.
-    This route allows admins to create a new choice by accepting the necessary information 
-    in a JSON payload. The input is validated, and duplicate choices or invalid data are rejected.
+    This route allows admins to create a new choice by accepting
+    the necessary information in a JSON payload. The input is validated,
+    and duplicate choices or invalid data are rejected.
 
     Return:
-        A JSON response with the created choice object or error messages for invalid input.
+        A JSON response with the created choice object or error messages
+        for invalid input.
     """
     # Ensure request data is JSON
     if not request.get_json():
@@ -164,7 +206,9 @@ def create_choices() -> ResponseReturnValue:
     choices = data.get('choices')
 
     if not (choices and isinstance(choices, list)):
-        abort(400, description="'choices' key is required and must be a non-empty list.")
+        abort(400, description=(
+            "'choices' key is required and must be a non-empty list."
+        ))
 
     for choice in choices:
         if not isinstance(choice, dict):
@@ -182,15 +226,16 @@ def update_choice(choice_id: str = None) -> ResponseReturnValue:
 
     Update an existing choice.
 
-    This route allows admins to update an existing choice by providing updated 
-    information in a JSON payload. Validations ensure updates are consistent with 
-    the business rules.
+    This route allows admins to update an existing choice by providing updated
+    information in a JSON payload. Validations ensure updates are consistent
+    with the business rules.
 
     URL Params:
         - choice_id (str): The ID of the choice to update.
 
     Returns:
-        A JSON response with the updated choice object or error messages for invalid input.
+        A JSON response with the updated choice object or error messages
+        for invalid input.
     """
     # Ensure request data is JSON
     if not request.get_json():

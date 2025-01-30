@@ -1,18 +1,25 @@
 #!/usr/bin/env python3
 """
-Quiz Service Module
-
-This module provides helper functions for managing quizzes, such as adding a new quiz 
-with input validation, formatting, and database interaction.
+This module provides helper functions to handle various operations
+related to quizzes. These operations include fetching quizzes,
+adding, updating quizzes, validating input data, and fetching related
+quiz questions. It interacts with the storage layer to perform
+CRUD operations for quizzes, and validates input such as quiz titles,
+descriptions, time limits, and topic IDs.
 
 Functions:
-    - add_quiz: Validates input data, ensures quiz uniqueness, and saves quizzes to the database.
-
-Dependencies:
-    - models.quiz.Quiz: The Quiz model.
-    - flask: For JSON responses and error handling.
-    - api.v1.utils.string_utils: For text formatting utilities.
+    - get_all_quizzes: Retrieves all quizzes from the database.
+    - get_quiz_by_id: Retrieves a quiz by its ID.
+    - get_questions_for_quiz: Retrieves all questions for a specific quiz.
+    - get_quiz_by_title_helper: Retrieves a quiz by its title.
+    - add_quiz: Adds a new quiz to the database.
+    - update_quiz_by_id: Updates quiz details by quiz ID.
+    - validate_quiz_title: Validates the title of a quiz.
+    - validate_time_limit: Validates the time limit of a quiz.
+    - validate_quiz_description: Validates the description of a quiz.
+    - validate_quiz_topic_id: Validates the topic ID associated with a quiz.
 """
+
 from models.quiz import Quiz
 from flask import jsonify, abort
 from api.v1.utils.string_utils import format_text_to_title
@@ -29,7 +36,7 @@ def get_all_quizzes(storage) -> List[Dict]:
 
     Args:
         storage (object): Storage instance to handle database operations.
-    
+
     Returns:
         List of dicts: A list of all Quizzes in JSON serializable format.
     """
@@ -44,7 +51,7 @@ def get_quiz_by_id(quiz_id: str, storage: Any) -> Optional[dict]:
     Args:
         quiz_id (str): The unique identifier for the quiz.
         storage (object): Storage instance to handle database operations.
-    
+
     Returns:
         dict: A dictionary representing the quiz if found.
         None: If the quiz is not found.
@@ -62,10 +69,10 @@ def get_quiz_by_id(quiz_id: str, storage: Any) -> Optional[dict]:
 def get_questions_for_quiz(quiz_id: str, storage: Any) -> List[Question]:
     """
     Fetch all questions for a specific quiz.
-    
+
     Args:
         quiz_id: The ID of the quiz.
-    
+
     Returns:
         A list of Question objects for the quiz.
     """
@@ -89,7 +96,7 @@ def get_quiz_by_title_helper(quiz_title: str, storage: Any) -> Optional[dict]:
     Args:
         quiz_title (str): The title of the quiz.
         storage (object): Storage instance to handle database operations.
-    
+
     Returns:
         dict: A dictionary representing the quiz if found.
         None: If the quiz is not found.
@@ -102,7 +109,7 @@ def get_quiz_by_title_helper(quiz_title: str, storage: Any) -> Optional[dict]:
 
     # Format the quiz title to match the storage format
     formatted_title = format_text_to_title(quiz_title)
-    
+
     # Retrieve the quiz by its title
     quiz = storage.get_by_value(Quiz, "title", formatted_title)
     return quiz
@@ -113,7 +120,8 @@ def add_quiz(data: Dict[str, Any], storage: Any) -> tuple:
     Helper function to add a quiz.
 
     Args:
-        data (dict): The data for the new quiz. Expected keys: 'title', 'description',
+        data (dict): The data for the new quiz.
+                     Expected keys: 'title', 'description',
                      'time_limit', 'topic_id'.
         storage (object): Storage instance to handle database operations.
 
@@ -124,7 +132,7 @@ def add_quiz(data: Dict[str, Any], storage: Any) -> tuple:
     title = data.get('title')
     if not title:
         abort(400, description="Quiz title is required!")
-    
+
     formatted_title = validate_quiz_title(title, storage)
 
     # Check for existing quiz with the same title
@@ -162,8 +170,20 @@ def add_quiz(data: Dict[str, Any], storage: Any) -> tuple:
     }), 201
 
 
-def update_quiz_by_id(data: Dict[str, Any], storage: Any, quiz_id: str) -> tuple:
-    """"""
+def update_quiz_by_id(data: Dict[str, Any],
+                      storage: Any,
+                      quiz_id: str) -> tuple:
+    """
+    Update quiz details by quiz ID.
+
+    Args:
+        data (dict): Dictionary containing fields to update.
+        storage (object): Storage instance to handle database operations.
+        quiz_id (str): The unique identifier of the quiz.
+
+    Returns:
+        tuple: A tuple containing a message and the updated quiz data.
+    """
     # Fetch the quiz object by ID
     quiz = get_quiz_by_id(quiz_id, storage)
     if not quiz:
@@ -175,9 +195,10 @@ def update_quiz_by_id(data: Dict[str, Any], storage: Any, quiz_id: str) -> tuple
         if not title:
             abort(400, description="Quiz title is required!")
         data['title'] = validate_quiz_title(title, storage)
-        if data['title'] != quiz.title and storage.get_by_value(Quiz, "title", data['title']):
+        if data['title'] != quiz.title and storage.get_by_value(
+            Quiz, "title", data['title']
+        ):
             abort(400, description="Quiz title already exists!")
-
 
     if 'description' in data:
         description = data.get('description')
@@ -219,6 +240,19 @@ def update_quiz_by_id(data: Dict[str, Any], storage: Any, quiz_id: str) -> tuple
 
 
 def validate_quiz_title(title, storage):
+    """
+    Validate the quiz title.
+
+    Args:
+        title (str): The title of the quiz.
+        storage (object): Storage instance to handle database operations.
+
+    Returns:
+        str: The formatted title if valid.
+
+    Raises:
+        abort (400): If the title is invalid.
+    """
     if not isinstance(title, str):
         abort(400, description="Quiz title must be a string")
 
@@ -231,23 +265,61 @@ def validate_quiz_title(title, storage):
     # Format title for consistency
     formatted_title = format_text_to_title(title)
     if not formatted_title:
-        abort(400, description="Quiz title must include alphabets and cannot be 'none' or 'null'.")
-
+        abort(400, description=(
+            "Quiz title must include alphabets and "
+            "cannot be 'none' or 'null'."
+        ))
     return formatted_title
 
 
 def validate_time_limit(time_limit):
+    """
+    Validate the quiz time limit.
+
+    Args:
+        time_limit (int): The time limit for the quiz.
+
+    Raises:
+        abort (400): If the time limit is not a positive integer.
+    """
     if not isinstance(time_limit, int) or time_limit <= 0:
-        abort(400, description="A valid time limit (positive integer) is required!")
+        abort(400, description=(
+            "A valid time limit (positive integer) "
+            "is required!"
+        ))
 
 
 def validate_quiz_description(description):
+    """
+    Validate the quiz description.
+
+    Args:
+        description (str): The description of the quiz.
+
+    Raises:
+        abort (400): If the description is invalid.
+    """
     if not isinstance(description, str):
         abort(400, description="Quiz description must be a string")
     if len(description) > 255:
-        abort(400, description="Quiz description cannot exceed 255 characters!")
+        abort(400,
+              description="Quiz description cannot exceed 255 characters!")
+
 
 def validate_quiz_topic_id(topic_id, storage):
+    """
+    Validate the quiz topic ID.
+
+    Args:
+        topic_id (str): The topic ID for the quiz.
+        storage (object): Storage instance to handle database operations.
+
+    Returns:
+        str: The valid topic ID.
+
+    Raises:
+        abort (404): If the topic is not found.
+    """
     if not isinstance(topic_id, str):
         abort(400, description="Topic ID must be a string")
     if topic_id.lower() in {"none", "null", ""}:

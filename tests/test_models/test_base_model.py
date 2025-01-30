@@ -7,6 +7,7 @@ from unittest.mock import patch, MagicMock
 from models.base_model import BaseModel
 from datetime import datetime
 
+
 class TestBaseModel(unittest.TestCase):
     """
     Unit tests for the BaseModel class.
@@ -16,7 +17,9 @@ class TestBaseModel(unittest.TestCase):
         """
         Sets up a new BaseModel instance for each test case.
         """
-        self.base_model_instance = BaseModel(id="1234", created_at=datetime.now(), updated_at=datetime.now())
+        self.base_model_instance = BaseModel(id="1234",
+                                             created_at=datetime.now(),
+                                             updated_at=datetime.now())
 
     def test_initialization(self):
         """
@@ -32,7 +35,8 @@ class TestBaseModel(unittest.TestCase):
         Test the save method.
         """
         # Mock the save method
-        mock_save.return_value = None  # Simulate that save doesn't raise errors
+        # Simulate that save doesn't raise errors
+        mock_save.return_value = None
         self.base_model_instance.save()
         mock_save.assert_called_once()
 
@@ -48,8 +52,10 @@ class TestBaseModel(unittest.TestCase):
         }
         result = self.base_model_instance.to_json()
         self.assertEqual(result['id'], self.base_model_instance.id)
-        self.assertEqual(result['created_at'], self.base_model_instance.created_at.isoformat())
-        self.assertEqual(result['updated_at'], self.base_model_instance.updated_at.isoformat())
+        self.assertEqual(result['created_at'],
+                         self.base_model_instance.created_at.isoformat())
+        self.assertEqual(result['updated_at'],
+                         self.base_model_instance.updated_at.isoformat())
 
     @patch.object(BaseModel, 'delete')
     def test_delete(self, mock_delete):
@@ -57,9 +63,11 @@ class TestBaseModel(unittest.TestCase):
         Test the delete method.
         """
         # Mock the delete method
-        mock_delete.return_value = None  # Simulate that delete doesn't raise errors
+        # Simulate that delete doesn't raise errors
+        mock_delete.return_value = None
         self.base_model_instance.delete()
         mock_delete.assert_called_once()
+
 
 if __name__ == '__main__':
     unittest.main()

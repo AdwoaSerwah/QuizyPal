@@ -4,7 +4,27 @@ from celery import Celery
 from flask_mail import Mail
 from datetime import timedelta
 import os
+"""
+This module configures the Flask application with environment variables and
+sets up key services such as Redis, Celery, and Flask-Mail.
 
+- Loads environment variables using dotenv.
+- Configures Flask settings, including database and JWT authentication.
+- Sets up Redis for caching and task queue management.
+- Initializes Flask-Mail for email handling.
+- Provides a factory function to create a Celery instance.
+
+Classes:
+    - Config: Centralized configuration class for application settings.
+
+Functions:
+    - make_celery(app): Creates and returns a Celery instance
+      configured with Flask settings.
+
+Globals:
+    - redis_client: Redis client instance for interacting with the cache.
+    - mail: Flask-Mail instance for handling email communication.
+"""
 # Load environment variables from .env
 load_dotenv()
 

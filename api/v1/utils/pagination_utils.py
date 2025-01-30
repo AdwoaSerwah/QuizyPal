@@ -1,7 +1,17 @@
 #!/usr/bin/env python3
+"""
+Pagination Utility Module.
+
+This module provides helper functions for paginating datasets, including
+index calculations and data filtering.
+
+Functions:
+    - index_range: Computes start and end indexes for pagination.
+    - get_paginated_data: Retrieves and paginates data while filtering
+      unwanted entries.
+"""
 import math
-from typing import List, Dict, Any, Tuple
-from flask import abort
+from typing import List, Dict, Tuple
 
 
 def index_range(page: int, page_size: int) -> Tuple[int, int]:
@@ -21,7 +31,9 @@ def index_range(page: int, page_size: int) -> Tuple[int, int]:
     return start_index, end_index
 
 
-def get_paginated_data(storage, cls, page: int = 1, page_size: int = 10) -> List[Dict]:
+def get_paginated_data(storage, cls,
+                       page: int = 1,
+                       page_size: int = 10) -> List[Dict]:
     """
     Returns a dictionary containing hypermedia pagination details.
 
@@ -35,21 +47,22 @@ def get_paginated_data(storage, cls, page: int = 1, page_size: int = 10) -> List
     # Determine start and end indexes using index_range
     start_index, end_index = index_range(page, page_size)
 
-    # Return the appropriate slice of the dataset
-    # dataset = list(storage.all(cls).values())
-    # data = dataset[start_index:end_index]
-    # sliced_data = [item.to_json() for item in dataset[start_index:min(end_index, len(dataset))]]
-
     # Get all data and convert it to a list
     dataset = list(storage.all(cls).values())
 
     # Filter out objects where 'choice_text' is 'no_answer'
-    filtered_dataset = [item for item in dataset if not hasattr(item, 'choice_text') or item.choice_text != 'no_answer']
+    filtered_dataset = [
+        item for item in dataset
+        if not hasattr(item, 'choice_text') or item.choice_text != 'no_answer'
+    ]
 
     # Slice the data
-    sliced_data = [item.to_json() for item in filtered_dataset[start_index:min(end_index, len(filtered_dataset))]]
+    end = min(end_index, len(filtered_dataset))
 
-
+    sliced_data = [
+        item.to_json()
+        for item in filtered_dataset[start_index:end]
+    ]
 
     # data = get_page(page, page_size)
     total_items = len(dataset)

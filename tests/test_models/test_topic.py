@@ -2,7 +2,6 @@
 """
 Unit tests for the Topic model.
 """
-
 import unittest
 from unittest.mock import MagicMock
 from models.topic import Topic

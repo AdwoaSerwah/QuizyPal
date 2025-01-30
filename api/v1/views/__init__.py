@@ -2,9 +2,9 @@
 """
 App Views Blueprint
 
-Defines the 'app_views' Blueprint for the API with the URL prefix '/api/v1'. 
-It groups views related to user management, authentication, quizzes, topics, 
-questions, and choices. Each view is registered under the '/api/v1' prefix for 
+Defines the 'app_views' Blueprint for the API with the URL prefix '/api/v1'.
+It groups views related to user management, authentication, quizzes, topics,
+questions, and choices. Each view is registered under the '/api/v1' prefix for
 consistent API versioning.
 
 Modules imported:
@@ -23,13 +23,13 @@ from flask import Blueprint
 
 app_views = Blueprint("app_views", __name__, url_prefix="/api/v1")
 
-from api.v1.views.index import *
-from api.v1.views.users import *
-from api.v1.views.auth import *
-from api.v1.views.refresh_tokens import *
-from api.v1.views.topics import *
-from api.v1.views.quizzes import *
-from api.v1.views.questions import *
-from api.v1.views.choices import *
-from api.v1.views.results import *
-from api.v1.views.user_answers import *
+from api.v1.views.index import *  # noqa
+from api.v1.views.users import *  # noqa
+from api.v1.views.auth import *  # noqa
+from api.v1.views.refresh_tokens import *  # noqa
+from api.v1.views.topics import *  # noqa
+from api.v1.views.quizzes import *  # noqa
+from api.v1.views.questions import *  # noqa
+from api.v1.views.choices import *  # noqa
+from api.v1.views.results import *  # noqa
+from api.v1.views.user_answers import *  # noqa

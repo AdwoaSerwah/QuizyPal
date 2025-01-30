@@ -3,6 +3,8 @@
 This module defines routes for managing users, including:
 - Viewing users
 - Viewing a user
+- Viewing user's results
+- Viewing user's answers
 - Creating new users
 - Updating existing users
 - Deleting users
@@ -13,11 +15,11 @@ option for role-based access control.
 from api.v1.views import app_views
 from flask import abort, jsonify, request
 from models.user import User, Role
-from models.refresh_token import RefreshToken
 from config import redis_client, Config
-from datetime import timedelta, datetime, timezone
+from datetime import datetime, timezone
 from models import storage
-from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt, verify_jwt_in_request
+from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask_jwt_extended import get_jwt, verify_jwt_in_request
 from email_validator import validate_email, EmailNotValidError
 from api.v1.utils.pagination_utils import get_paginated_data
 from flask.typing import ResponseReturnValue
@@ -25,7 +27,6 @@ from api.v1.services.auth_service import admin_required
 from api.v1.services.result_service import get_quiz_results_for_user
 from api.v1.services.user_answer_service import get_result_answers_for_user
 from api.v1.utils.string_utils import format_text_to_title
-from api.v1.services.quiz_service import get_quiz_by_id
 
 
 @app_views.route('/users', methods=['GET'], strict_slashes=False)
@@ -38,7 +39,7 @@ def get_users() -> ResponseReturnValue:
     Get all users.
     This route retrieves all user records from the storage and
     returns them as a JSON list.
-    
+
     Return:
         A JSON array containing all User objects.
         If no users are found, it returns an empty list.
@@ -47,7 +48,8 @@ def get_users() -> ResponseReturnValue:
     try:
         # Convert query parameters to integers with defaults
         page = int(request.args.get('page', 1))  # Default page is 1
-        page_size = int(request.args.get('page_size', 10))  # Default page_size is 10
+        # Default page_size is 10
+        page_size = int(request.args.get('page_size', 10))
 
         # Ensure both values are positive integers
         if page <= 0 or page_size <= 0:
@@ -72,10 +74,10 @@ def get_user(user_id: str = None) -> ResponseReturnValue:
 
     Get a specific user by their user_id.
     This route retrieves a single user based on the provided user_id.
-    
+
     Parameters:
         user_id (str): The unique identifier for the user.
-        
+
     Return:
         A JSON object representing the user if found.
         If the user is not found, returns a 404 error.
@@ -87,7 +89,8 @@ def get_user(user_id: str = None) -> ResponseReturnValue:
     current_user_id = get_jwt_identity()
     current_user_role = get_jwt()["role"]
 
-    # Check if the current user is an admin or if they are trying to delete their own account
+    # Check if the current user is an admin or
+    # if they are trying to delete their own account
     if current_user_role != "admin" and user_id != current_user_id:
         abort(403, description="You are not authorized to retrieve this user.")
 
@@ -97,12 +100,14 @@ def get_user(user_id: str = None) -> ResponseReturnValue:
 
     return jsonify(user.to_json())
 
- 
-@app_views.route('/users/<user_id>/results', methods=['GET'], strict_slashes=False)
+
+@app_views.route('/users/<user_id>/results',
+                 methods=['GET'], strict_slashes=False)
 @jwt_required()
 def get_user_quiz_results(user_id: str) -> ResponseReturnValue:
     """
-    Get all results for a specific user or specific quiz results if quiz_id is provided.
+    Get all results for a specific user or specific quiz results
+    if quiz_id is provided.
 
     Args:
         user_id: The ID of the user whose results are to be retrieved.
@@ -124,18 +129,21 @@ def get_user_quiz_results(user_id: str) -> ResponseReturnValue:
 
     # Authorization: Admins or the user themselves can access results
     if current_user_role != "admin" and user_id != current_user_id:
-        abort(403, description="Access denied: You can only view your own results.")
+        abort(403,
+              description="Access denied: You can only view your own results.")
 
     # Fetch and return results
     result_list = get_quiz_results_for_user(user_id, quiz_id, storage)
     return jsonify(result_list), 200
 
 
-@app_views.route('/users/<user_id>/user-answers', methods=['GET'], strict_slashes=False)
+@app_views.route('/users/<user_id>/user-answers',
+                 methods=['GET'], strict_slashes=False)
 @jwt_required()
 def get_user_result_user_answers(user_id: str) -> ResponseReturnValue:
     """
-    Get all user answers for a specific user or specific result user answers if result_id is provided.
+    Get all user answers for a specific user or specific result user answers
+    if result_id is provided.
 
     Args:
         user_id: The ID of the user whose user answers are to be retrieved.
@@ -158,12 +166,14 @@ def get_user_result_user_answers(user_id: str) -> ResponseReturnValue:
 
     # Authorization: Admins or the user themselves can access user answers
     if current_user_role != "admin" and user_id != current_user_id:
-        abort(403, description="Access denied: You can only view your own user answers.")
+        abort(403, description=(
+            "Access denied: You can only view your own user answers."
+        ))
 
     # Fetch and return user answers
-    user_answer_list = get_result_answers_for_user(user_id, result_id, quiz_id, storage)
+    user_answer_list = get_result_answers_for_user(user_id, result_id,
+                                                   quiz_id, storage)
     return jsonify(user_answer_list), 200
-
 
 
 @app_views.route('/users/<user_id>', methods=['DELETE'], strict_slashes=False)
@@ -173,14 +183,16 @@ def delete_user(user_id: str = None) -> ResponseReturnValue:
     DELETE /api/v1/users/:id
 
     Delete a specific user by their user_id.
-    This route deletes a user after verifying the identity of the user making the request.
-    
+    This route deletes a user after verifying the identity of the user
+    making the request.
+
     Parameters:
         user_id (str): The unique identifier of the user to be deleted.
-        
+
     Return:
         A JSON response indicating whether the deletion was successful.
-        If the user does not exist or the current user is unauthorized, it returns an error.
+        If the user does not exist or the current user is unauthorized,
+        it returns an error.
     """
     if user_id is None:
         abort(400, description="User ID is required")
@@ -189,7 +201,8 @@ def delete_user(user_id: str = None) -> ResponseReturnValue:
     current_user_id = get_jwt_identity()
     current_user_role = get_jwt()["role"]
 
-    # Check if the current user is an admin or if they are trying to delete their own account
+    # Check if the current user is an admin or if they are trying to delete
+    # their own account
     if current_user_role != "admin" and user_id != current_user_id:
         abort(403, description="You are not authorized to delete this user.")
 
@@ -202,10 +215,11 @@ def delete_user(user_id: str = None) -> ResponseReturnValue:
 
     # Blacklist the user's refresh tokens in Redis
     print(user.refresh_tokens)
-    for token in user.refresh_tokens:  # Automatically fetched due to the relationship
+    # Automatically fetched due to the relationship
+    for token in user.refresh_tokens:
         redis_client.setex(
             f"blacklist:{token.token}",
-            int(refresh_token_exp.total_seconds()),  # Blacklist duration
+            int(refresh_token_exp.total_seconds()),
             "blacklisted"
         )
     # Delete the user
@@ -217,12 +231,15 @@ def delete_user(user_id: str = None) -> ResponseReturnValue:
 
 @app_views.route('/users', methods=['POST'], strict_slashes=False)
 def create_user() -> ResponseReturnValue:
-    """ 
+    """
     POST /api/v1/users/
 
     Create a new user.
-    This route allows the creation of a new user by accepting the necessary information 
-    in a JSON payload. The input is validated, and duplicate users or invalid data are rejected.
+    This route allows the creation of a new user by accepting
+    the necessary information in a JSON payload.
+
+    The input is validated, and duplicate users or invalid
+    data are rejected.
 
     JSON body:
         - email: The user's email address (must be unique and valid).
@@ -233,7 +250,8 @@ def create_user() -> ResponseReturnValue:
         - role: (optional) Role of the user (default is 'user').
 
     Return:
-        A JSON response with the created user object, or error messages for invalid input.
+        A JSON response with the created user object, or error messages
+        for invalid input.
     """
     # Ensure request data is JSON
     if not request.get_json():
@@ -242,7 +260,8 @@ def create_user() -> ResponseReturnValue:
     data = request.get_json()
 
     # Define the required fields
-    required_fields = ['first_name', 'last_name', 'username', 'email', 'password']
+    required_fields = ['first_name', 'last_name',
+                       'username', 'email', 'password']
 
     # Check for missing required fields
     for field in required_fields:
@@ -254,7 +273,9 @@ def create_user() -> ResponseReturnValue:
         if not isinstance(value, str):
             abort(400, description=f"{field} must be a string.")
         if len(value) > 128:
-            abort(400, description=f"{field} cannot be longer than 128 characters.")
+            abort(400, description=(
+                f"{field} cannot be longer than 128 characters."
+            ))
         if field == 'first_name' or field == 'last_name':
             # Update the field with the converted string value
             formatted_text = format_text_to_title(value)
@@ -280,28 +301,36 @@ def create_user() -> ResponseReturnValue:
     role = data.get('role', 'user')  # Default to 'User' if not provided
 
     # Check if the current user is authenticated and has an 'admin' role
-    # Assuming that the current user's identity is available via JWT (get_jwt_identity)
     current_user_role = None
     if role == "admin":
         # Ensure user is logged in and is an admin
         if 'Authorization' not in request.headers:
-            abort(403, description="Admin role can only be assigned by an authenticated admin.")
-        
+            abort(403, description=(
+                "Admin role can only be assigned by an authenticated admin."
+            ))
         try:
-            verify_jwt_in_request()  # Verify JWT
-            current_user_role = get_jwt()['role']  # Get current user identity
+            verify_jwt_in_request()
+            # Get current user identity
+            current_user_role = get_jwt()['role']
             if current_user_role != 'admin':
-                return jsonify({'error': 'Only admins can assign the role of "admin".'}), 403
+                return jsonify({
+                    'error': 'Only admins can assign the role of "admin".'
+                }), 403
+
         except Exception as e:
-            return jsonify({'error': f'Invalid or missing token: {str(e)}'}), 401
+            return jsonify({
+                'error': f'Invalid or missing token: {str(e)}'
+            }), 401
 
     try:
-        role_enum = Role.from_str(data.get('role', 'user'))  # Default to 'user' if no role provided
+        # Default to 'user' if no role provided
+        role_enum = Role.from_str(data.get('role', 'user'))
     except ValueError as e:
         return jsonify({'error': str(e)}), 400
 
+    # Set the role in data before passing it to the User constructor
+    data['role'] = role_enum
     # Create new user instance using kwargs
-    data['role'] = role_enum  # Set the role in data before passing it to the User constructor
     instance = User(**data)
 
     try:
@@ -318,17 +347,17 @@ def create_user() -> ResponseReturnValue:
 @app_views.route('/users/<user_id>', methods=['PUT'], strict_slashes=False)
 @jwt_required()
 def update_user(user_id: str = None) -> ResponseReturnValue:
-    """ 
+    """
     PUT /api/v1/users/:id
 
     Update user information.
-    This route allows an authenticated user or admin to update a user's details 
-    (such as first name, last name, username, email, and password). 
+    This route allows an authenticated user or admin to update a user's details
+    (such as first name, last name, username, email, and password).
     Role updates are restricted to admin users only.
 
     Parameters:
         user_id (str): The unique identifier for the user.
-    
+
     JSON body:
         - first_name (optional)
         - last_name (optional)
@@ -338,7 +367,8 @@ def update_user(user_id: str = None) -> ResponseReturnValue:
         - role (optional)
 
     Return:
-        A JSON response with the updated user object, or error messages for invalid input.
+        A JSON response with the updated user object, or error messages
+        for invalid input.
     """
     # Ensure request data is JSON
     if user_id is None:
@@ -365,7 +395,8 @@ def update_user(user_id: str = None) -> ResponseReturnValue:
     updated = False
 
     # Update user fields if provided in the request
-    updatable_fields = ['first_name', 'last_name', 'username', 'email', 'password']
+    updatable_fields = ['first_name', 'last_name',
+                        'username', 'email', 'password']
     for field in updatable_fields:
         if field in data and field != 'role':
             value = data.get(field)
@@ -374,7 +405,10 @@ def update_user(user_id: str = None) -> ResponseReturnValue:
             if not isinstance(value, str):
                 abort(400, description=f"{field} must be a string.")
             if len(value) > 128:
-                abort(400, description=f"{field} cannot be longer than 128 characters.")
+                abort(400, description=(
+                        f"{field} cannot be longer than 128 characters."
+                    ))
+
             if field == 'first_name' or field == 'last_name':
                 # Update the field with the converted string value
                 value = format_text_to_title(value)
@@ -392,7 +426,9 @@ def update_user(user_id: str = None) -> ResponseReturnValue:
                 try:
                     validate_email(value)
                 except EmailNotValidError as e:
-                    return jsonify({'error': f'Invalid email format: {e}'}), 400
+                    return jsonify({
+                        'error': f'Invalid email format: {e}'
+                    }), 400
 
                 # Ensure no other user has this email
                 if storage.get_by_value(User, 'email', value):
@@ -410,8 +446,9 @@ def update_user(user_id: str = None) -> ResponseReturnValue:
     # Handle role updates (Admins only)
     if 'role' in data:
         if data.get('role') == "admin" and current_user_role != 'admin':
-            abort(403, description="Only admins can assign the role of 'admin'.")
-        
+            abort(403,
+                  description="Only admins can assign the role of 'admin'.")
+
         try:
             role = Role.from_str(data['role'])
             if user.role != role:
@@ -419,7 +456,7 @@ def update_user(user_id: str = None) -> ResponseReturnValue:
                 updated = True
         except ValueError as e:
             return jsonify({'error': str(e)}), 400
-            
+
     # If no updates were made, return a specific message
     if not updated:
         message = 'No changes were made to the user.'

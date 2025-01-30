@@ -1,6 +1,14 @@
+#!/usr/bin/env python3
+"""
+This module defines test cases for the app_views endpoints of the Flask API.
+It includes tests for various routes such as status, unauthorized, forbidden,
+stats, and the home endpoint. The tests ensure the correct status codes and
+responses are returned for each route.
+"""
 import unittest
 from flask import Flask
 from api.v1.views import app_views
+
 
 class TestAppViews(unittest.TestCase):
     """Test cases for app_views endpoints."""
@@ -42,7 +50,9 @@ class TestAppViews(unittest.TestCase):
         """Test the root / endpoint."""
         response = self.client.get('/api/v1/')
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json, {"message": "Welcome to the QuizyPal API!"})
+        self.assertEqual(response.json,
+                         {"message": "Welcome to the QuizyPal API!"})
+
 
 if __name__ == "__main__":
     unittest.main()

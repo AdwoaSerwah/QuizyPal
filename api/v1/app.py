@@ -175,7 +175,6 @@ def internal_server_error(error) -> str:
     return jsonify({"error": message}), 500
 
 
-
 # Swagger setup
 app.config['SWAGGER'] = {'title': 'QuizyPal Restful API', 'uiversion': 1}
 Swagger(app)

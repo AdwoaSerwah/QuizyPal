@@ -1,28 +1,37 @@
 #!/usr/bin/env python3
-"""
-Result Service Module
 
-This module provides helper functions for managing results, such as adding a new result 
-with input validation, formatting, and database interaction.
-
-Functions:
-    - add_result: Validates input data, ensures result uniqueness, and saves results to the database.
-
-Dependencies:
-    - models.result.Result: The Result model.
-    - flask: For JSON responses and error handling.
-    - api.v1.utils.string_utils: For text formatting utilities.
-"""
 from flask import jsonify, abort
-from api.v1.utils.string_utils import format_text_to_title
-from models.quiz import Quiz
-from api.v1.services.topic_service import get_topic_by_id
 from typing import List, Dict, Any, Optional
 from datetime import datetime, timezone
 from models.user import User
 from models.result import Result, QuizSessionStatus
 from api.v1.services.quiz_service import get_quiz_by_id
-from decimal import Decimal
+"""
+This module provides utility functions and helper methods for managing quiz
+results. It includes functions to:
+
+- Fetch all results or specific results by ID.
+- Retrieve results for a specific user and quiz.
+- Add or update quiz results, including validation for score, time taken,
+  status, and datetime fields.
+- Generate feedback based on quiz scores.
+
+The module interacts with a database through a storage object and handles
+quiz result data, ensuring validity and proper handling of user and quiz
+relationships.
+
+Functions:
+    - get_all_results: Retrieve all quiz results.
+    - get_result_by_id: Retrieve a result by its ID.
+    - get_quiz_results_for_user: Fetch results for a specific user or quiz.
+    - add_result: Add a new quiz result.
+    - update_result_by_id: Update an existing result by its ID.
+    - validate_score: Ensure score is a valid float between 0.00 and 100.00.
+    - validate_time_taken: Ensure the time taken is a non-negative integer.
+    - validate_status: Ensure the quiz session status is valid.
+    - validate_datetime: Ensure datetime fields are valid and not in future.
+    - calculate_feedback: Generate feedback based on the quiz percentage score.
+"""
 
 
 def get_all_results(storage) -> List[Dict]:
@@ -31,7 +40,7 @@ def get_all_results(storage) -> List[Dict]:
 
     Args:
         storage (object): Storage instance to handle database operations.
-    
+
     Returns:
         List of dicts: A list of all Results in JSON serializable format.
     """
@@ -46,7 +55,7 @@ def get_result_by_id(result_id: str, storage: Any) -> Optional[dict]:
     Args:
         result_id (str): The unique identifier for the result.
         storage (object): Storage instance to handle database operations.
-    
+
     Returns:
         dict: A dictionary representing the result if found.
         None: If the result is not found.
@@ -61,13 +70,18 @@ def get_result_by_id(result_id: str, storage: Any) -> Optional[dict]:
     return result
 
 
-def get_quiz_results_for_user(user_id: str, quiz_id: Optional[str], storage: Any) -> List[Dict]:
+def get_quiz_results_for_user(
+        user_id: str,
+        quiz_id: Optional[str],
+        storage: Any) -> List[Dict]:
     """
-    Fetch all results for a specific user, or specific quiz results if quiz_id is provided.
+    Fetch all results for a specific user, or specific quiz results
+    if quiz_id is provided.
 
     Args:
         user_id: The ID of the user whose results are to be retrieved.
-        quiz_id: (Optional) The ID of the quiz whose results are to be retrieved.
+        quiz_id: (Optional) The ID of the quiz whose results are to be
+                 retrieved.
         storage: The storage handler for querying data.
 
     Returns:
@@ -79,7 +93,7 @@ def get_quiz_results_for_user(user_id: str, quiz_id: Optional[str], storage: Any
     else:
         # Fetch all results for the user
         results = storage.filter_by(Result, user_id=user_id)
-    
+
     # Sort results by creation date
     results.sort(key=lambda q: q.created_at, reverse=True)
 
@@ -151,7 +165,25 @@ def add_result(data: Dict[str, Any], storage: Any) -> tuple:
     # Return the created result
     return jsonify(new_result.to_json()), 201
 
-def update_result_by_id(data: Dict[str, Any], storage: Any, result_id: str) -> tuple:
+
+def update_result_by_id(data: Dict[str, Any],
+                        storage: Any,
+                        result_id: str) -> tuple:
+    """
+    Update a result by its result_id with the provided data.
+
+    Args:
+        data (Dict[str, Any]): Fields to update in the result.
+        storage (Any): Database storage for querying and saving data.
+        result_id (str): The ID of the result to update.
+
+    Returns:
+        tuple: A tuple containing a message and the updated result.
+
+    Raises:
+        400: Invalid data (e.g., user ID, score).
+        404: Result, quiz, or user not found.
+    """
     # Fetch the result by result_id
     result = get_result_by_id(result_id, storage)
     if result is None:
@@ -176,7 +208,6 @@ def update_result_by_id(data: Dict[str, Any], storage: Any, result_id: str) -> t
         score = data.get('score')
         validate_score(score)
 
-
     if 'time_taken' in data:
         time_taken = data.get('time_taken')
         validate_time_taken(time_taken)
@@ -184,7 +215,7 @@ def update_result_by_id(data: Dict[str, Any], storage: Any, result_id: str) -> t
     if 'status' in data:
         status = data.get('status')
         data['status'] = validate_status(status)
-    
+
     if 'submitted_at' in data:
         submitted_at = data.get('submitted_at')
         validate_datetime(submitted_at)
@@ -198,7 +229,10 @@ def update_result_by_id(data: Dict[str, Any], storage: Any, result_id: str) -> t
         validate_datetime(end_time)
 
     updated = False
-    fields = ['quiz_id', 'user_id', 'score', 'time_taken', 'status', 'submitted_at', 'start_time', 'end_time']
+    fields = ['quiz_id', 'user_id',
+              'score', 'time_taken',
+              'status', 'submitted_at',
+              'start_time', 'end_time']
 
     for key, value in data.items():
         if key in fields:
@@ -206,7 +240,7 @@ def update_result_by_id(data: Dict[str, Any], storage: Any, result_id: str) -> t
                 continue
             setattr(result, key, value)
             updated = True
-    
+
     # If no update was made, return a message indicating so
     if not updated:
         message = "No changes made to the result"
@@ -223,8 +257,17 @@ def update_result_by_id(data: Dict[str, Any], storage: Any, result_id: str) -> t
     }), 200
 
 
-def validate_score(score: Optional[Decimal]) -> None:
-    # Validate score (Decimal type, between 0 and 100)
+def validate_score(score: Optional[float]) -> None:
+    """
+    Validate the score, ensuring it is a float and between 0.00 and 100.00.
+
+    Args:
+        score (Optional[float]): The score to validate, expected to be a float
+                                 between 0.00 and 100.00.
+
+    Raises:
+        abort (400): If the score is not a float or is outside the valid range.
+    """
     if not isinstance(score, float):
         abort(400, description="Score must be a float.")
     if score < 0.00 or score > 100.00:
@@ -232,26 +275,57 @@ def validate_score(score: Optional[Decimal]) -> None:
 
 
 def validate_time_taken(time_taken: Optional[int]) -> None:
-    # Validate time_taken (int type, >= 0)
+    """
+    Validate the time_taken value, ensuring it is a non-negative integer.
+
+    Args:
+        time_taken (Optional[int]): The time taken to complete the quiz,
+                                    expected to be a non-negative integer.
+
+    Raises:
+        abort (400): If time_taken is not an integer or is less than 0.
+    """
     if not isinstance(time_taken, int):
         abort(400, description=f"Time taken must be an integer.")
     if time_taken < 0:
-        abort(400, description="Time taken must be greater than or equal to 0.")
+        abort(400,
+              description="Time taken must be greater than or equal to 0.")
 
 
-def validate_status(status: str) -> None:
-    # Validate status (must be a valid QuizSessionStatus)
+def validate_status(status: str) -> Optional[QuizSessionStatus]:
+    """
+    Validate the status, ensuring it is a valid `QuizSessionStatus`.
+
+    Args:
+        status (str): The status of the quiz session, expected to be
+                      one of the valid `QuizSessionStatus` values.
+
+    Returns:
+        QuizSessionStatus: The validated `QuizSessionStatus` enum.
+
+    Raises:
+        abort (400): If the status is not valid.
+    """
     try:
         status_enum = QuizSessionStatus.from_str(status)
         return status_enum
     except ValueError as e:
-        return jsonify({'error': str(e)}), 400
+        abort(400, description=str(e))
 
 
 def validate_datetime(field: Optional[datetime]) -> None:
+    """
+    Validate that the provided datetime field is valid.
+
+    Args:
+        field (Optional[datetime]): The datetime to validate.
+
+    Raises:
+        abort (400): If field is not a datetime object or is in the future.
+    """
     if not isinstance(field, datetime):
         abort(400, description=f"{field} must be a datetime object.")
-            
+
     if field > datetime.now(timezone.utc):
         abort(400, description=f"{field} cannot be in the future.")
 
@@ -259,6 +333,15 @@ def validate_datetime(field: Optional[datetime]) -> None:
 def calculate_feedback(percentage: float) -> str:
     """
     Generate feedback based on the quiz percentage score.
+
+    Args:
+        percentage (float): The percentage score of the quiz.
+
+    Returns:
+        str: A feedback message based on the percentage score.
+
+    Example:
+        calculate_feedback(85) -> "Great job! Keep it up!"
     """
     if percentage >= 90:
         return "Excellent! You're a star!"

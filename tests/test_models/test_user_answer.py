@@ -3,6 +3,24 @@ import unittest
 from models.user_answer import UserAnswer
 from datetime import datetime
 from unittest.mock import patch
+"""
+Unit tests for the UserAnswer model, which represents the answers provided
+by users in a quiz. The tests ensure that the initialization, string
+representation, and mocked behavior of the UserAnswer model work as expected.
+
+Key tests included in this module:
+- Verifying the correct initialization of a UserAnswer instance with the
+  expected attributes (user_id, quiz_id, question_id, choice_id, created_at,
+  and updated_at).
+- Ensuring the __repr__ method of UserAnswer provides a meaningful string
+  representation of the object.
+- Testing the mocked __repr__ method to ensure mocking functionality works
+  as expected.
+
+Mocking of the __repr__ method is used to isolate the behavior and avoid
+depending on the actual implementation.
+"""
+
 
 class TestUserAnswerModel(unittest.TestCase):
     def setUp(self):
@@ -30,7 +48,7 @@ class TestUserAnswerModel(unittest.TestCase):
         self.assertIsInstance(self.user_answer.updated_at, datetime)
 
     def test_user_answer_repr(self):
-        """Test the string representation (__repr__) of the UserAnswer instance."""
+        """Test the string representation (__repr__) of UserAnswer instance."""
         user_answer_repr = repr(self.user_answer)
         self.assertIn("UserAnswer(user_id=user123", user_answer_repr)
         self.assertIn("quiz_id=quiz123", user_answer_repr)
@@ -42,6 +60,7 @@ class TestUserAnswerModel(unittest.TestCase):
         """Test the mocked __repr__ method for UserAnswer."""
         mock_repr.return_value = "Mocked UserAnswer String"
         self.assertEqual(repr(self.user_answer), "Mocked UserAnswer String")
+
 
 if __name__ == "__main__":
     unittest.main()

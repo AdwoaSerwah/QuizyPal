@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
-Contains tests for the DBStorage class for interacting with the MySQL database.
+Contains tests for the DBStorage class
+for interacting with the MySQL database.
 """
 
 import unittest
@@ -28,9 +29,7 @@ class TestDBStorage(unittest.TestCase):
         # Mock the sessionmaker to return a mocked session
         self.mock_session_factory = MagicMock()
         self.mock_session_factory.return_value = self.mock_session
-
-        # Use the storage instance directly instead of trying to instantiate DBStorage again
-        self.db_storage = storage  # storage is already an instance of DBStorage
+        self.db_storage = storage
         self.db_storage._DBStorage__session = self.mock_session
 
     @patch('models.engine.db_storage.DBStorage.all')
@@ -38,7 +37,8 @@ class TestDBStorage(unittest.TestCase):
         """
         Test the 'all' method which retrieves all objects from the database.
         """
-        mock_all.return_value = {'User.123': MagicMock(), 'User.456': MagicMock()}
+        mock_all.return_value = {'User.123': MagicMock(),
+                                 'User.456': MagicMock()}
 
         result = self.db_storage.all(User)
         self.assertEqual(len(result), 2)
@@ -72,7 +72,8 @@ class TestDBStorage(unittest.TestCase):
     @patch('models.engine.db_storage.DBStorage.count')
     def test_count(self, mock_count):
         """
-        Test the 'count' method to ensure it counts the number of objects correctly.
+        Test the 'count' method to ensure it counts
+        the number of objects correctly.
         """
         mock_count.return_value = 3
         result = self.db_storage.count(User)

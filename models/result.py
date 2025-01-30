@@ -5,11 +5,10 @@ This class interacts with the database via SQLAlchemy for data persistence.
 """
 
 from models.base_model import BaseModel, Base
-# from decimal import Decimal
 from sqlalchemy import Column, Float, String, Integer, ForeignKey, Enum, DateTime, Index
 from sqlalchemy.orm import relationship
-from enum import Enum as PyEnum  # Importing Python's Enum class
-from datetime import datetime, timezone  # Missing imports
+from enum import Enum as PyEnum
+from datetime import datetime, timezone
 
 
 

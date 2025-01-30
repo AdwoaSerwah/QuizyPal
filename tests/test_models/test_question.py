@@ -1,10 +1,15 @@
 #!/usr/bin/env python3
+"""
+Unit tests for the Question model.
+"""
 import unittest
 from models.question import Question
 from datetime import datetime
 from unittest.mock import patch
 
+
 class TestQuestionModel(unittest.TestCase):
+    """Test suite for the Question model."""
     def setUp(self):
         """Set up the test environment."""
         # Initialize the Question model with mock data
@@ -23,18 +28,20 @@ class TestQuestionModel(unittest.TestCase):
     def test_question_initialization(self):
         """Test the initialization of a Question instance."""
         self.assertEqual(self.question.quiz_id, "123")
-        self.assertEqual(self.question.question_text, "What is the capital of France?")
+        self.assertEqual(self.question.question_text,
+                         "What is the capital of France?")
         self.assertEqual(self.question.order_number, 1)
         self.assertFalse(self.question.allow_multiple_answers)
         self.assertIsInstance(self.question.created_at, datetime)
         self.assertIsInstance(self.question.updated_at, datetime)
 
     def test_question_repr(self):
-        """Test the string representation (__repr__) of the Question instance."""
+        """Test the string representation (__repr__) of Question instance."""
         question_repr = repr(self.question)
         self.assertIn("Question(id=", question_repr)
         self.assertIn("quiz_id=123", question_repr)
-        self.assertIn("question_text=What is the capital of France?", question_repr)
+        self.assertIn("question_text=What is the capital of France?",
+                      question_repr)
         self.assertIn("allow_multiple_answers=False", question_repr)
         self.assertIn("created_at=", question_repr)
         self.assertIn("updated_at=", question_repr)
@@ -44,6 +51,7 @@ class TestQuestionModel(unittest.TestCase):
         """Test the mocked __repr__ method for Question."""
         mock_repr.return_value = "Mocked Question String"
         self.assertEqual(repr(self.question), "Mocked Question String")
+
 
 if __name__ == "__main__":
     unittest.main()

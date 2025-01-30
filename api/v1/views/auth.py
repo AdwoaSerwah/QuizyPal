@@ -11,11 +11,10 @@ This module handles authentication-related routes for users. It includes:
 from flask import jsonify, request, abort
 from flask_jwt_extended import create_access_token, create_refresh_token
 from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from models import storage
 from models.user import User
 from models.refresh_token import RefreshToken
-from typing import Dict, Any
 from api.v1.views import app_views
 from config import redis_client, Config
 from api.v1.utils.email_utils import send_password_reset_email
@@ -25,8 +24,9 @@ from flask.typing import ResponseReturnValue
 @app_views.route('/login', methods=['POST'])
 def login() -> ResponseReturnValue:
     """
-    Authenticates a user by verifying their credentials (username/email and password),
-    generates an access token and refresh token, and saves the refresh token to both the 
+    Authenticates a user by verifying their credentials
+    (username/email and password), generates an access token
+    and refresh token, and saves the refresh token to both the
     database and Redis cache.
 
     Request JSON data:
@@ -35,7 +35,8 @@ def login() -> ResponseReturnValue:
       - 'password': The user's password.
 
     Return:
-      - A JSON response containing a success message, access token, and refresh token.
+      - A JSON response containing a success message, access token,
+        and refresh token.
       - 400 if required fields are missing.
       - 403 if user is not found or password is incorrect.
       - 500 for internal server errors.
@@ -43,7 +44,7 @@ def login() -> ResponseReturnValue:
     # Ensure request data is JSON
     if not request.get_json():
         abort(400, description="No JSON data provided in the request!")
-    
+
     data = request.get_json()
 
     username = data.get('username')
@@ -88,7 +89,8 @@ def login() -> ResponseReturnValue:
         new_token.save()
         storage.save()
     except Exception:
-        abort(500, description="An unexpected error occurred while saving token")
+        abort(500,
+              description="An unexpected error occurred while saving token")
 
     # Cache the refresh token in Redis
     redis_key = f"refresh_token:{user.id}:{new_token.id}"
@@ -105,13 +107,15 @@ def login() -> ResponseReturnValue:
         "token_id": new_token.id
     }), 200
 
+
 @app_views.route('/logout', methods=['POST'])
 @jwt_required(refresh=True)
 def logout() -> ResponseReturnValue:
     """
     POST /api/v1/logout:
     Logs the user out by invalidating the refresh token.
-    The refresh token is blacklisted in Redis, and its status is marked as expired in the database.
+    The refresh token is blacklisted in Redis, and its status
+    is marked as expired in the database.
 
     Returns:
       - A message confirming the successful logout.
@@ -121,7 +125,7 @@ def logout() -> ResponseReturnValue:
     # Ensure request data is JSON
     if not request.get_json():
         abort(400, description="No JSON data provided in the request!")
-    
+
     current_user = get_jwt_identity()
     refresh_token_id = request.json.get("token_id", None)
 
@@ -133,7 +137,8 @@ def logout() -> ResponseReturnValue:
 
     # Retrieve the refresh token from the Authorization header
     request_refresh_token = request.headers.get('Authorization')
-    request_refresh_token = request_refresh_token.split("Bearer ")[-1]  # Extract token after "Bearer"
+    # Extract token after "Bearer"
+    request_refresh_token = request_refresh_token.split("Bearer ")[-1]
 
     # Access expiration values from Config
     refresh_token_exp = Config.JWT_REFRESH_TOKEN_EXPIRES
@@ -150,24 +155,31 @@ def logout() -> ResponseReturnValue:
 
     # Step 2: Fetch the refresh token from Redis
     stored_refresh_token = redis_client.get(redis_key)
-    
+
     # If the token is found in Redis, compare it with the request token
     if stored_refresh_token:
         if stored_refresh_token != request_refresh_token:
-            abort(401, description="The refresh token does not match the token_id provided")
+            abort(401, description=(
+                "The refresh token does not match the token_id provided"
+            ))
     else:
         # Fallback to the database if the token is not in Redis
         db_refresh_token = storage.query(RefreshToken).filter_by(
-            user_id=current_user, id=refresh_token_id, token=request_refresh_token
+            user_id=current_user,
+            id=refresh_token_id,
+            token=request_refresh_token
         ).first()
 
         if not db_refresh_token or db_refresh_token.is_expired:
-            abort(401, description="Invalid, revoked, or expired refresh token, or token does not match the provided token ID")
-    
+            abort(401, description=(
+                "Invalid, revoked, or expired refresh token, "
+                "or token does not match the provided token ID"
+            ))
+
     # Step 3: Blacklist the token in Redis
     redis_client.setex(
         blacklist_key,
-        int(refresh_token_exp.total_seconds()),  # Set blacklist duration to match token expiry
+        int(refresh_token_exp.total_seconds()),
         "blacklisted"
     )
 
@@ -177,7 +189,7 @@ def logout() -> ResponseReturnValue:
     ).first()
 
     if db_refresh_token:
-        db_refresh_token.is_expired = True  # Mark as expired instead of deleting
+        db_refresh_token.is_expired = True
         storage.save()
 
     return jsonify({"message": "Logged out successfully"}), 200
@@ -188,7 +200,8 @@ def forgot_password() -> ResponseReturnValue:
     """
     POST /api/v1/forgot-password:
     Handles the forgot password request.
-    It generates a reset token and sends a password reset link to the user's email.
+    It generates a reset token and sends a password reset link to the
+    user's email.
 
     Returns:
       - A success message with the reset token if the email is found.
@@ -218,7 +231,10 @@ def forgot_password() -> ResponseReturnValue:
 
     message = send_password_reset_email(user.email, user.reset_token)
     # Return the success response immediately
-    message = 'An email has been sent to your email address containing the reset token.'
+    message = (
+        'An email has been sent to your email address '
+        'containing the reset token.'
+    )
 
     return jsonify({
         "message": message,
@@ -226,7 +242,8 @@ def forgot_password() -> ResponseReturnValue:
         }), 200
 
 
-@app_views.route('/reset-password/<token>', methods=['POST'], strict_slashes=False)
+@app_views.route('/reset-password/<token>',
+                 methods=['POST'], strict_slashes=False)
 def reset_password(token: str = None) -> ResponseReturnValue:
     """
     POST /api/v1/reset-password/<token>:

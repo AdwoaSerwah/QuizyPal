@@ -1,10 +1,15 @@
 #!/usr/bin/env python3
+"""
+Unit tests for the Choice model.
+"""
 import unittest
 from models.choice import Choice
 from datetime import datetime
 from unittest.mock import patch
 
+
 class TestChoiceModel(unittest.TestCase):
+    """Test suite for the Choice model."""
     def setUp(self):
         """Set up the test environment."""
         # Initialize the Choice model with mock data
@@ -44,6 +49,7 @@ class TestChoiceModel(unittest.TestCase):
         """Test the mocked __repr__ method for Choice."""
         mock_repr.return_value = "Mocked Choice String"
         self.assertEqual(repr(self.choice), "Mocked Choice String")
+
 
 if __name__ == "__main__":
     unittest.main()

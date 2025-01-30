@@ -1,4 +1,30 @@
 #!/usr/bin/env python3
+"""
+This module contains routes and functionality for managing
+topics in the QuizyPal application.
+
+It includes endpoints for:
+- Retrieving all topics
+- Retrieving a specific topic by its ID or name
+- Creating, updating, and deleting topics
+- Retrieving quizzes associated with specific topics
+
+The module interacts with the storage system to perform CRUD operations
+on topics and their relationships with quizzes. It also supports pagination
+for listing topics and requires JWT authentication and admin privileges for
+creating, updating, and deleting topics.
+
+Functions:
+- get_topics: Retrieves all topics with pagination.
+- get_topic: Retrieves a specific topic by its ID.
+- handle_no_name: Handles requests to the '/topics/name' route.
+- get_topic_by_name: Retrieves a specific topic by its name.
+- get_topic_quizzes: Retrieves quizzes associated with a topic and
+  its subtopics.
+- delete_topic: Deletes a specific topic by its ID.
+- create_topic: Creates a new topic.
+- update_topic: Updates an existing topic by its ID.
+"""
 from api.v1.views import app_views
 from flask import abort, jsonify, request
 from models.topic import Topic
@@ -7,7 +33,9 @@ from models import storage
 from flask_jwt_extended import jwt_required
 from api.v1.services.auth_service import admin_required
 from api.v1.utils.pagination_utils import get_paginated_data
-from api.v1.services.topic_service import add_topic, get_topic_by_name_helper, get_topic_by_id, validate_parent_id, validate_topic_name
+from api.v1.services.topic_service import add_topic, get_topic_by_name_helper
+from api.v1.services.topic_service import get_topic_by_id, validate_parent_id
+from api.v1.services.topic_service import validate_topic_name
 from datetime import datetime, timezone
 from flask.typing import ResponseReturnValue
 from typing import List, Dict
@@ -21,7 +49,7 @@ def get_topics() -> ResponseReturnValue:
     Get all topics.
     This route retrieves all topic records from the storage and
     returns them as a JSON list.
-    
+
     Return:
         A JSON array containing all topic objects.
         If no topics are found, it returns an empty list.
@@ -30,7 +58,8 @@ def get_topics() -> ResponseReturnValue:
     try:
         # Convert query parameters to integers with defaults
         page = int(request.args.get('page', 1))  # Default page is 1
-        page_size = int(request.args.get('page_size', 10))  # Default page_size is 10
+        # Default page_size is 10
+        page_size = int(request.args.get('page_size', 10))
 
         # Ensure both values are positive integers
         if page <= 0 or page_size <= 0:
@@ -54,18 +83,18 @@ def get_topic(topic_id: str = None) -> ResponseReturnValue:
 
     Get a specific topic by their topic_id.
     This route retrieves a single topic based on the provided topic_id.
-    
+
     Parameters:
         topic_id (str): The unique identifier for the topic.
-        
+
     Return:
         A JSON object representing the topic if found.
         If the topic is not found, returns a 404 error.
     """
-    # Call the helper function `get_topic_by_id` to retrieve the topic by its ID.
+    # Call the helper function to retrieve the topic by its ID.
     topic = get_topic_by_id(topic_id, storage)
 
-    # If the topic is not found, abort with a 404 error and message "Topic not found".
+    # If the topic is not found, abort with a 404 error
     if topic is None:
         abort(404, description="Topic not found")
     # If the topic is found, return it as a JSON object.
@@ -78,17 +107,18 @@ def handle_no_name() -> ResponseReturnValue:
     abort(400, description="Topic name is required")
 
 
-@app_views.route('/topics/name/<topic_name>', methods=['GET'], strict_slashes=False)
+@app_views.route('/topics/name/<topic_name>',
+                 methods=['GET'], strict_slashes=False)
 def get_topic_by_name(topic_name: str = None) -> ResponseReturnValue:
     """
     GET /api/v1/topics/:topic_name
 
     Get a specific topic by their name.
     This route retrieves a single topic based on the provided topic_name.
-    
+
     Parameters:
         topic_name (str): The name of the topic.
-        
+
     Return:
         A JSON object representing the topic if found.
         If the topic is not found, returns a 404 error.
@@ -102,13 +132,8 @@ def get_topic_by_name(topic_name: str = None) -> ResponseReturnValue:
     return jsonify(topic.to_json())
 
 
-# @app_views.route('/quizzes/topic', methods=['GET'], strict_slashes=False)
-# def handle_no_topic_id() -> ResponseReturnValue:
-#    """Handles no topic_id error"""
-#    abort(400, description="Topic ID is required")
-
-
-@app_views.route('/topics/<topic_id>/quizzes', methods=['GET'], strict_slashes=False)
+@app_views.route('/topics/<topic_id>/quizzes',
+                 methods=['GET'], strict_slashes=False)
 def get_topic_quizzes(topic_id: str = None) -> ResponseReturnValue:
     """
     GET /api/v1/quizzes/topic/<topic_id>
@@ -140,10 +165,12 @@ def get_topic_quizzes(topic_id: str = None) -> ResponseReturnValue:
         subtopic_data = []
         for subtopic in topic.subtopics:
             subtopic_quizzes = fetch_quizzes_by_topic(subtopic)
-            if subtopic_quizzes:  # Include only if subtopic has quizzes
+            # Include only if subtopic has quizzes
+            if subtopic_quizzes:
                 subtopic_data.append(subtopic_quizzes)
 
-        # Include current topic only if it has quizzes or subtopics with quizzes
+        # Include current topic only if it has quizzes
+        # or subtopics with quizzes
         if quizzes or subtopic_data:
             return {topic.name: quizzes + subtopic_data}
 
@@ -161,7 +188,8 @@ def get_topic_quizzes(topic_id: str = None) -> ResponseReturnValue:
     return jsonify(response), 200
 
 
-@app_views.route('/topics/<topic_id>', methods=['DELETE'], strict_slashes=False)
+@app_views.route('/topics/<topic_id>',
+                 methods=['DELETE'], strict_slashes=False)
 @jwt_required()
 @admin_required
 def delete_topic(topic_id: str = None) -> ResponseReturnValue:
@@ -169,17 +197,19 @@ def delete_topic(topic_id: str = None) -> ResponseReturnValue:
     DELETE /api/v1/topics/:id
 
     Delete a specific topic by their topic_id.
-    This route deletes a topic after verifying the identity of the topic making the request.
-    
+    This route deletes a topic after verifying the identity of the
+    topic making the request.
+
     Parameters:
         topic_id (str): The unique identifier of the topic to be deleted.
-        
+
     Return:
         A JSON response indicating whether the deletion was successful.
-        If the topic does not exist or the current topic is unauthorized, it returns an error.
+        If the topic does not exist or the current topic is unauthorized,
+        it returns an error.
     """
     topic = get_topic_by_id(topic_id, storage)
-    # If the topic is not found, abort with a 404 error and message "Topic not found".
+    # If the topic is not found, abort with a 404 error.
     if topic is None:
         abort(404, description="Topic not found")
 
@@ -194,19 +224,21 @@ def delete_topic(topic_id: str = None) -> ResponseReturnValue:
 @jwt_required()
 @admin_required
 def create_topic() -> ResponseReturnValue:
-    """ 
+    """
     POST /api/v1/topics/
 
     Create a new topic.
-    This route allows the creation of a new topic by accepting the necessary information 
-    in a JSON payload. The input is validated, and duplicate topics or invalid data are rejected.
+    This route allows the creation of a new topic by accepting
+    the necessary information in a JSON payload. The input is
+    validated, and duplicate topics or invalid data are rejected.
 
     JSON body:
         - name (str): The name of the topic.
         - parent_id (Optional[int]): The ID of the parent topic
 
     Return:
-        A JSON response with the created topic object, or error messages for invalid input.
+        A JSON response with the created topic object, or error
+        messages for invalid input.
     """
     # Ensure request data is JSON
     if not request.get_json():
@@ -222,20 +254,21 @@ def create_topic() -> ResponseReturnValue:
 @jwt_required()
 @admin_required
 def update_topic(topic_id: str = None) -> ResponseReturnValue:
-    """ 
+    """
     PUT /api/v1/topics/:id
 
     Update an existing topic.
-    This route allows the update of an existing topic by accepting the necessary 
-    information in a JSON payload. The input is validated, and duplicate topics 
-    or invalid data are rejected.
+    This route allows the update of an existing topic by accepting
+    the necessary information in a JSON payload. The input is validated,
+    and duplicate topics or invalid data are rejected.
 
     JSON body:
         - name (str): The name of the topic.
         - parent_id (Optional[int]): The ID of the parent topic
 
     Return:
-        A JSON response with the updated topic object, or error messages for invalid input.
+        A JSON response with the updated topic object, or error messages
+        for invalid input.
     """
     # Ensure request data is JSON
     if not request.get_json():
@@ -259,13 +292,14 @@ def update_topic(topic_id: str = None) -> ResponseReturnValue:
     if 'name' in data:
         name = data.get('name')
         data['name'] = validate_topic_name(name)
-        if data['name'] != topic.name and storage.get_by_value(Topic, "name", data['name']):
+        if data['name'] != topic.name and storage.get_by_value(
+            Topic, "name", data['name']
+        ):
             abort(400, description="Topic name already exists!")
-
 
     # Update the topic object with new data
     updated = False
-    
+
     for key, value in data.items():
         if key in ['parent_id', 'name']:
             if value == getattr(topic, key):
@@ -279,7 +313,7 @@ def update_topic(topic_id: str = None) -> ResponseReturnValue:
         message = "Topic updated successfully"
         topic.updated_at = datetime.now(timezone.utc)
         topic.save()
-    
+
     return jsonify({
         "message": message,
         "topic": topic.to_json()

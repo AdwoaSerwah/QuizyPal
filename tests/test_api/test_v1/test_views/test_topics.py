@@ -1,3 +1,9 @@
+#!/usr/bin/env python3
+"""
+This module defines a Flask application with routes for managing topics,
+including create, read, update, and delete operations. It also includes
+unit tests for these routes to ensure correct functionality.
+"""
 import unittest
 from flask import Flask, request, jsonify
 from unittest.mock import patch
@@ -5,9 +11,16 @@ from unittest.mock import patch
 # Define your Flask app directly here
 app = Flask(__name__)
 
+
 # A simple route to test - Create a topic
 @app.route('/create-topic', methods=['POST'])
 def create_topic():
+    """
+    Route to create a new topic.
+
+    Expects JSON data with a 'name' field. If successful, returns a message
+    indicating the topic was created. Otherwise, returns an error message.
+    """
     data = request.get_json()
     topic_name = data.get('name')
     if topic_name:
@@ -18,6 +31,11 @@ def create_topic():
 # Get all topics
 @app.route('/topics', methods=['GET'])
 def get_topics():
+    """
+    Route to retrieve all topics.
+
+    Returns a list of topics in JSON format.
+    """
     topics = [{'id': 1, 'name': 'Topic 1'}, {'id': 2, 'name': 'Topic 2'}]
     return jsonify(topics), 200
 
@@ -25,6 +43,11 @@ def get_topics():
 # Get a specific topic by ID
 @app.route('/topics/<int:topic_id>', methods=['GET'])
 def get_topic_by_id(topic_id):
+    """
+    Route to retrieve a specific topic by its ID.
+
+    Expects a topic ID as part of the URL and returns the topic's details.
+    """
     topic = {'id': topic_id, 'name': f'Topic {topic_id}'}
     return jsonify(topic), 200
 
@@ -32,16 +55,31 @@ def get_topic_by_id(topic_id):
 # Delete a topic
 @app.route('/delete-topic/<int:topic_id>', methods=['DELETE'])
 def delete_topic(topic_id):
+    """
+    Route to delete a topic by its ID.
+
+    Expects a topic ID and deletes the corresponding topic. Returns a message
+    indicating the deletion.
+    """
     return jsonify({'message': f'Topic {topic_id} deleted'}), 200
 
 
 # Update a topic
 @app.route('/update-topic/<int:topic_id>', methods=['PUT'])
 def update_topic(topic_id):
+    """
+    Route to update a topic's name.
+
+    Expects a topic ID in the URL and a new name in the JSON data.
+    Returns a message indicating the topic was updated or an error if the name
+    is missing.
+    """
     data = request.get_json()
     topic_name = data.get('name')
     if topic_name:
-        return jsonify({'message': f'Topic {topic_id} updated to {topic_name}'}), 200
+        return jsonify(
+            {'message': f'Topic {topic_id} updated to {topic_name}'}
+        ), 200
     return jsonify({'error': 'Topic name is required'}), 400
 
 
@@ -59,7 +97,8 @@ class TestTopicRoutes(unittest.TestCase):
             with patch('flask.request.get_json', return_value=request_data):
                 response = self.client.post('/create-topic', json=request_data)
                 self.assertEqual(response.status_code, 200)
-                self.assertIn('Topic New Topic created', response.get_data(as_text=True))
+                self.assertIn('Topic New Topic created',
+                              response.get_data(as_text=True))
 
     def test_create_topic_missing_name(self):
         """Test creating a topic without a name."""
@@ -68,7 +107,8 @@ class TestTopicRoutes(unittest.TestCase):
             with patch('flask.request.get_json', return_value=request_data):
                 response = self.client.post('/create-topic', json=request_data)
                 self.assertEqual(response.status_code, 400)
-                self.assertIn('Topic name is required', response.get_data(as_text=True))
+                self.assertIn('Topic name is required',
+                              response.get_data(as_text=True))
 
     def test_get_topics(self):
         """Test retrieving all topics."""
@@ -92,7 +132,8 @@ class TestTopicRoutes(unittest.TestCase):
         with app.test_request_context():
             response = self.client.delete(f'/delete-topic/{topic_id}')
             self.assertEqual(response.status_code, 200)
-            self.assertIn(f'Topic {topic_id} deleted', response.get_data(as_text=True))
+            self.assertIn(f'Topic {topic_id} deleted',
+                          response.get_data(as_text=True))
 
     def test_update_topic_success(self):
         """Test updating a topic successfully."""
@@ -100,9 +141,11 @@ class TestTopicRoutes(unittest.TestCase):
         request_data = {'name': 'Updated Topic'}
         with app.test_request_context():
             with patch('flask.request.get_json', return_value=request_data):
-                response = self.client.put(f'/update-topic/{topic_id}', json=request_data)
+                response = self.client.put(f'/update-topic/{topic_id}',
+                                           json=request_data)
                 self.assertEqual(response.status_code, 200)
-                self.assertIn(f'Topic {topic_id} updated to Updated Topic', response.get_data(as_text=True))
+                self.assertIn(f'Topic {topic_id} updated to Updated Topic',
+                              response.get_data(as_text=True))
 
     def test_update_topic_missing_name(self):
         """Test updating a topic without a name."""
@@ -110,9 +153,11 @@ class TestTopicRoutes(unittest.TestCase):
         request_data = {}
         with app.test_request_context():
             with patch('flask.request.get_json', return_value=request_data):
-                response = self.client.put(f'/update-topic/{topic_id}', json=request_data)
+                response = self.client.put(f'/update-topic/{topic_id}',
+                                           json=request_data)
                 self.assertEqual(response.status_code, 400)
-                self.assertIn('Topic name is required', response.get_data(as_text=True))
+                self.assertIn('Topic name is required',
+                              response.get_data(as_text=True))
 
 
 if __name__ == '__main__':
