@@ -1,5 +1,7 @@
 # QuizyPal
 
+## Introduction
+
 QuizyPal is an interactive quiz application designed to provide an engaging platform for users to test and improve their knowledge. It allows users to take quizzes on various topics, track their progress, and receive feedback based on their performance. The app is built with a focus on providing an intuitive experience for both quiz takers and administrators.
 
 ### ACTUAL PRESENTATION AND DEMO VIDEO LINK: [**here**](https://drive.google.com/file/d/1dhgt9wKVBHR2YfcEM6GWkHNzILnitgg8/view?usp=sharing)
@@ -8,9 +10,21 @@ QuizyPal is an interactive quiz application designed to provide an engaging plat
 
 ### QUIZYPAL API POSTMAN COLLECTION (more details in the [**Postman**](#postman-collection-instructions) section): [**here**](https://www.postman.com/research-geoscientist-64388512/my-workspace/collection/40764868-5a04296f-1ad7-45c7-8f32-69141777f7be?action=share&creator=40764868&active-environment=40764868-0a1a0347-6843-48c3-a938-74598e18dd24)
 
+**Project timeline:** December 13, 2024 – January 27, 2025
+
+**Author:** [Adwoa Serwah](https://www.linkedin.com/in/adwoa-kyei-baffour-892490192)
+
 ## Installation
 
+### Prerequisites
+- Python 3.10 installed
+- MySQL installed and running
+- pip (Python package installer)
+- Git (for cloning the repository)
+
 **Note:** These instructions assume you are using a Unix-like environment (Linux, macOS, etc.) where bash is available. If you're on Windows, you may need to use Git Bash or Windows Subsystem for Linux (WSL).
+
+### Installation Instructions
 
 To get a local copy up and running, follow these steps:
 
@@ -195,7 +209,7 @@ docker exec -it quizypal_redis redis-cli
 ```
 
 ### Database Setup
-The data base will be set up with the docker. The init-scripts/grant_privileges.sh has been added to the docker-compose.yml to grant all privileges to the user created during the docker setup.
+The database will be set up with the docker. The init-scripts/grant_privileges.sh has been added to the docker-compose.yml to grant all privileges to the user created during the docker setup.
 
 You can run the grant_privileges.sh again if it has not been set up automatically by:
 ```bash
@@ -223,7 +237,7 @@ docker exec -it quizypal_db mysql -u root -p
 ## Usage
 
 ### Base URL
-The base URL for the API is `http://localhost:5000/api/v1`.
+The base URL for the API is `http://localhost:5000/`.
 
 ### Authentication
 Most routes require JWT token-based authentication. Include the JWT token in the `Authorization` header as follows:
