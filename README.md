@@ -16,12 +16,6 @@ QuizyPal is an interactive quiz application designed to provide an engaging plat
 
 ## Installation
 
-### Prerequisites
-- Python 3.10 installed
-- MySQL installed and running
-- pip (Python package installer)
-- Git (for cloning the repository)
-
 **Note:** These instructions assume you are using a Unix-like environment (Linux, macOS, etc.) where bash is available. If you're on Windows, you may need to use Git Bash or Windows Subsystem for Linux (WSL).
 
 ### Installation Instructions
@@ -745,7 +739,7 @@ Now, your Postman setup is complete, and you can start testing the API! 🚀
 - **Database**: MySQL (Flask-SQLAlchemy as ORM), Redis (for caching)  
 - **Authentication**: JWT (Flask-JWT-Extended)  
 - **Email Service**: Flask-Mail  
-- **Testing & Debugging**: Postman  
+- **Testing, Documenting & Debugging**: Postman  
 - **Version Control**: Git & GitHub  
 
 ## Contribution
