@@ -10,9 +10,9 @@ QuizyPal is an interactive quiz application designed to provide an engaging plat
 
 ### QUIZYPAL API POSTMAN COLLECTION (more details in the [**Postman**](#postman-collection-instructions) section): [**here**](https://www.postman.com/research-geoscientist-64388512/my-workspace/collection/40764868-5a04296f-1ad7-45c7-8f32-69141777f7be?action=share&creator=40764868&active-environment=40764868-0a1a0347-6843-48c3-a938-74598e18dd24)
 
-**Project timeline:** December 13, 2024 – January 27, 2025
+**PROJECT TIMELINE: December 13, 2024 – January 27, 2025**
 
-**Author:** [Adwoa Serwah](https://www.linkedin.com/in/adwoa-kyei-baffour-892490192)
+**AUTHOR**: [**Adwoa Serwah**](https://www.linkedin.com/in/adwoa-kyei-baffour-892490192)
 
 ## Installation
 
