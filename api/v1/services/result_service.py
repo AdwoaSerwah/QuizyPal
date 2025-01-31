@@ -348,7 +348,7 @@ def calculate_feedback(percentage: float) -> str:
     elif percentage >= 80:
         return "Great job! Keep it up!"
     elif percentage >= 70:
-        return "Good effort! You're improving!"
+        return "Good effort! You're on the right track!"
     elif percentage >= 50:
         return "Satisfactory. Aim higher next time!"
     else:

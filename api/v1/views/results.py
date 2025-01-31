@@ -207,7 +207,33 @@ def get_result_feedback(result_id: str) -> ResponseReturnValue:
         result_id (str): The unique identifier of the result (quiz attempt).
 
     Return:
-        A JSON response containing the quiz feedback.
+        A JSON response containing the quiz feedback, including:
+        - Total score for the user
+        - Correct and incorrect answers
+        - Percentage score
+        - Feedback based on the performance
+        - Detailed answers with points awarded for each question
+
+    Scoring Logic:
+        - For single-answer questions:
+            - 1 point is awarded if the user's answer is correct.
+            - 0 points are awarded if the user's answer is incorrect.
+
+        - For multiple-answer questions:
+            - Each correct answer contributes a fraction of the total
+              possible points, calculated as:
+              points_per_correct_answer = 1 / number_of_correct_choices
+
+            - Incorrect choices result in a penalty, calculated as:
+              penalty_per_incorrect_choice = 1 / (total_choices - 1)
+              (the penalty excludes the 'no_answer' choice).
+
+            - The user's score for each question is the sum of the correct
+              answers' points minus the penalty for incorrect choices.
+
+            - The total score is the sum of points awarded for all questions.
+
+            - Scores are clamped to be non-negative.
     """
     # Get the user ID from the JWT token
     user_id = get_jwt_identity()
@@ -265,11 +291,12 @@ def get_result_feedback(result_id: str) -> ResponseReturnValue:
             # Determine the number of correct choices and
             # the total number of choices
             correct_answers_count = len(correct_choices)
+            # Exclude the "no_answer" choice
             total_choices_count = len(question.choices) - 1
 
             # Points per correct answer and points per incorrect answer
             points_per_correct_answer = 1 / correct_answers_count
-            # 1 divided by total choices for penalty
+            # Penalty based on total choices
             penalty_per_incorrect_choice = 1 / total_choices_count
 
             # User's selected choices
@@ -302,7 +329,7 @@ def get_result_feedback(result_id: str) -> ResponseReturnValue:
                 - (incorrect_selections * penalty_per_incorrect_choice)
             )
 
-            # Ensure points are not negative
+            # Ensure points are not negative (no negative scores)
             points_awarded = max(points_awarded, 0)
 
             total_score += points_awarded
@@ -322,7 +349,7 @@ def get_result_feedback(result_id: str) -> ResponseReturnValue:
                 user_selected_choice_ids = []  # No answer selected
 
             if user_choice_id and user_choice_id in correct_choices:
-                points_awarded = 1
+                points_awarded = 1  # Correct choice for single-answer question
                 total_score += 1
                 correct_answers += 1
                 is_correct = True
@@ -368,7 +395,7 @@ def get_result_feedback(result_id: str) -> ResponseReturnValue:
     completion_time_minutes = round(result.time_taken / 60)
 
     # Compare the calculated score with the current result.score
-    # If the calculated score is different, update it
+    # to ensure result.score is not updated every time this route is requested
     if result.score != total_score:
         result.score = total_score
         result.updated_at = datetime.now(timezone.utc)

@@ -2,7 +2,7 @@
 
 ## Introduction
 
-QuizyPal is an interactive quiz application designed to provide an engaging platform for users to test and improve their knowledge. It allows users to take quizzes on various topics, track their progress, and receive feedback based on their performance. The app is built with a focus on providing an intuitive experience for both quiz takers and administrators.
+QuizyPal is an interactive quiz application designed to provide an engaging platform for users to test and improve their knowledge. It allows users to take quizzes on various topics, receive feedback based on their performance, and track their progress. This project focuses on the **backend** of the QuizyPal app, providing APIs for essential features such as quiz management, user authentication, and result tracking, with an emphasis on promoting a seamless interaction for both quiz takers and administrators.
 
 ### ACTUAL PRESENTATION AND DEMO VIDEO LINK: [**here**](https://drive.google.com/file/d/1dhgt9wKVBHR2YfcEM6GWkHNzILnitgg8/view?usp=sharing)
 
@@ -231,7 +231,7 @@ docker exec -it quizypal_db mysql -u root -p
 ## Usage
 
 ### Base URL
-The base URL for the API is `http://localhost:5000/`.
+The base URL for the API is `http://localhost:5000`.
 
 ### Authentication
 Most routes require JWT token-based authentication. Include the JWT token in the `Authorization` header as follows:
@@ -676,7 +676,9 @@ For a more detailed documentation, refer to the [**Postman Collection Instructio
 
 ## Postman Collection Instructions
 
-- **For Documentation Only**: If you're only interested in **reading the documentation** for the API routes, you can directly view the collection [here](https://www.postman.com/research-geoscientist-64388512/my-workspace/collection/40764868-5a04296f-1ad7-45c7-8f32-69141777f7be?action=share&creator=40764868&active-environment=40764868-0a1a0347-6843-48c3-a938-74598e18dd24).
+The **QuizyPal API** Postman collection is organized into folders (**User, Authentication, Refresh Token, Topic, Quiz, Question, Choice, Result, and User Answer**), each representing a distinct **API section**. Each folder contains requests for routes specific to that section, along with a **saved response example** of a successful request, making it easy to preview the expected response format.
+
+- **For Documentation Only**: If you're only interested in **reading the documentation** for the API routes, you can directly view the collection [here](https://www.postman.com/research-geoscientist-64388512/my-workspace/collection/40764868-5a04296f-1ad7-45c7-8f32-69141777f7be?action=share&creator=40764868&active-environment=40764868-0a1a0347-6843-48c3-a938-74598e18dd24). 
 
 - **For Testing the Routes**: If you want to **send API requests test the routes** using Postman, read the setup instructions below.
 ---
@@ -693,7 +695,7 @@ Before testing the routes in Postman, make sure to **complete the steps in the [
 **Note:** You may need to use the **Postman Desktop App** instead of the web version. You can download it from [Postman’s official website](https://www.postman.com/downloads/).
 
 #### 3. Set Up the Environment  
-- Go to **Manage Environments** in Postman (gear icon in the top-right corner).
+- Go to **Manage Environments** in Postman.
 - Create a **new environment** in Postman named **"QuizyPal API"**.
 - Add the `base_url` variable: Set this to your running API base URL (e.g., `http://localhost:5000/`).
 
