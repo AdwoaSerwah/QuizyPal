@@ -669,6 +669,8 @@ For a more detailed documentation, refer to the [**Postman Collection Instructio
         - `incorrect_answers`: Number of incorrect answers.
         - `no_answers`: Number of unanswered questions.
         - `total_questions`: Total number of questions.
+        - `total_score`: Total marks for quiz.
+        - `user_score`: The user's score
         - `percentage`: The score percentage.
         - `answers`: A list of detailed answers, including question text, user choice, and correct choice.
 

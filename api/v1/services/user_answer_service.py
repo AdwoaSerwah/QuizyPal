@@ -12,6 +12,7 @@ from typing import List, Dict, Any, Optional
 from datetime import datetime, timezone
 from models.user_answer import UserAnswer
 from models.user import User
+from models.choice import Choice
 from api.v1.services.result_service import get_result_by_id
 from api.v1.services.question_service import get_question_by_id
 from api.v1.services.quiz_service import get_quiz_by_id
@@ -211,6 +212,13 @@ def add_user_answer(data: Dict[str, Any], storage: Any) -> tuple:
         if not choice:
             abort(404, description="Choice not found")
 
+        # Ensure the selected choice belongs to the provided question
+        choice_in_question = storage.filter_by(Choice, id=choice_id,
+                                               question_id=question_id)
+        if not choice_in_question:
+            abort(400, description=(
+                f"The choice {choice_id} does not belong "
+                f"to the given question {question_id}."))
         existing_user_answer = storage.filter_by(UserAnswer,
                                                  result_id=result_id,
                                                  user_id=user_id,
@@ -223,6 +231,21 @@ def add_user_answer(data: Dict[str, Any], storage: Any) -> tuple:
                 f"User Answer for question {question_id} "
                 f"and choice {choice_id} already exists for this user!"
             ))
+
+        # Check if the question allows multiple answers
+        if not question.allow_multiple_answers:
+            # Ensure user has not already selected an answer for this question
+            existing_answer = storage.filter_by(UserAnswer,
+                                                result_id=result_id,
+                                                user_id=user_id,
+                                                quiz_id=quiz_id,
+                                                question_id=question_id)
+            if existing_answer:
+                abort(400, description=(
+                    f"The question with ID {question_id} allows only one "
+                    "correct choice. Please use the update route to modify "
+                    "your existing answer."
+                ))
 
         user_answer = UserAnswer(user_id=user.id,
                                  result_id=result.id,

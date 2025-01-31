@@ -221,14 +221,12 @@ def get_result_feedback(result_id: str) -> ResponseReturnValue:
     # Check if the user ID from the JWT matches the user ID
     # associated with the result
     if result.user_id != user_id and current_user_role != "admin":
-        abort(403, description="You are not authorized to stop this quiz.")
+        abort(403, description="You are not authorized to view this feedback.")
 
     # Check if the quiz status is completed or timed-out
     if result.status.value not in ["completed", "timed-out"]:
         abort(400, description="Quiz has not been completed or timed out yet.")
 
-    print(f"REsult status: {result.status.value}")
-    print(f"{result.status.value} in ['completed, 'timed-out']?")
     # Fetch the associated quiz from the result object
     quiz = result.quiz
     quiz = get_quiz_by_id(quiz.id, storage)
@@ -246,7 +244,6 @@ def get_result_feedback(result_id: str) -> ResponseReturnValue:
 
     # Initialize variables
     total_score = 0
-    # Assume each question is worth 1 point
     max_score = len(all_questions)
     unanswered_questions = []
     answers_details = []
@@ -261,14 +258,19 @@ def get_result_feedback(result_id: str) -> ResponseReturnValue:
             if choice.is_correct
         ]
 
-        user_choice_id = user_answers_map.get(question.id)
-        points_awarded = 0
-        is_correct = False
+        # Initialize user_selected_choice_ids outside the block
+        user_selected_choice_ids = []
 
         if question.allow_multiple_answers:
+            # Determine the number of correct choices and
+            # the total number of choices
             correct_answers_count = len(correct_choices)
-            # Partial scoring for multiple correct answers
+            total_choices_count = len(question.choices) - 1
+
+            # Points per correct answer and points per incorrect answer
             points_per_correct_answer = 1 / correct_answers_count
+            # 1 divided by total choices for penalty
+            penalty_per_incorrect_choice = 1 / total_choices_count
 
             # User's selected choices
             user_selected_choices = storage.filter_by(UserAnswer,
@@ -280,14 +282,29 @@ def get_result_feedback(result_id: str) -> ResponseReturnValue:
                 for answer in user_selected_choices
             ]
 
-            # Calculate points based on user's correct selections
+            # Calculate correct selections
             correct_selections = sum(
                 1
                 for choice_id in user_selected_choice_ids
                 if choice_id in correct_choices
             )
 
-            points_awarded = correct_selections * points_per_correct_answer
+            # Calculate the number of incorrect selections
+            incorrect_selections = sum(
+                1
+                for choice_id in user_selected_choice_ids
+                if choice_id not in correct_choices
+            )
+
+            # Penalize by subtracting the number of incorrect choices
+            points_awarded = (
+                (correct_selections * points_per_correct_answer)
+                - (incorrect_selections * penalty_per_incorrect_choice)
+            )
+
+            # Ensure points are not negative
+            points_awarded = max(points_awarded, 0)
+
             total_score += points_awarded
 
             # Determine if all correct answers were selected
@@ -296,17 +313,27 @@ def get_result_feedback(result_id: str) -> ResponseReturnValue:
                 correct_answers += 1
             else:
                 incorrect_answers += 1
-
         else:  # Single-answer question
+            user_choice_id = user_answers_map.get(question.id)
+            if user_choice_id:
+                # Assign the single selected choice
+                user_selected_choice_ids = [user_choice_id]
+            else:
+                user_selected_choice_ids = []  # No answer selected
+
             if user_choice_id and user_choice_id in correct_choices:
-                points_awarded = float(1)
+                points_awarded = 1
                 total_score += 1
                 correct_answers += 1
                 is_correct = True
             elif user_choice_id is None:
+                points_awarded = 0
                 unanswered_questions.append(question.id)
+                is_correct = False
             else:
                 incorrect_answers += 1
+                points_awarded = 0
+                is_correct = False
 
         # Append detailed answer information
         answers_details.append({
@@ -314,8 +341,13 @@ def get_result_feedback(result_id: str) -> ResponseReturnValue:
             "question_text": question.question_text,
             "user_choice": (
                 "no_answer"
-                if user_choice_id is None
-                else storage.get(Choice, user_choice_id).choice_text
+                if not user_selected_choice_ids
+                else ", ".join(
+                    [
+                        storage.get(Choice, choice_id).choice_text
+                        for choice_id in user_selected_choice_ids
+                    ]
+                )  # Join multiple selected choices with commas
             ),
             "correct_choice": ", ".join(
                 [
@@ -327,6 +359,7 @@ def get_result_feedback(result_id: str) -> ResponseReturnValue:
         })
 
     # Calculate the percentage score
+    total_score = round(total_score, 2)
     percentage = (total_score / max_score) * 100 if max_score > 0 else 0
 
     # Generate feedback based on percentage
@@ -353,6 +386,8 @@ def get_result_feedback(result_id: str) -> ResponseReturnValue:
         "incorrect_answers": incorrect_answers,
         "no_answers": len(unanswered_questions),
         "total_questions": max_score,
-        "percentage": f"{round(percentage, 2)}%",
+        "user_score": total_score,
+        "total_score": max_score,
+        "percentage": f"{percentage}%",
         "answers": answers_details
     }), 200
