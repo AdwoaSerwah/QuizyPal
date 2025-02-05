@@ -154,14 +154,16 @@ def add_user_answer(data: Dict[str, Any], storage: Any) -> tuple:
     if not result:
         abort(404, description="Result not found")
 
+    # Check if the user ID from the JWT matches the result's user ID
+    if result.user_id != user_id and current_user_role != "admin":
+        abort(403, description=(
+            "You are not authorized to add answers to this quiz attempt."
+        ))
+
     # Check if the quiz status is in-progress
     result_status = result.status.value
     if current_user_role != 'admin' and result_status not in ["in-progress"]:
         abort(400, description="Quiz has already been completed or timed out.")
-
-    # Check if the user ID from the JWT matches the result's user ID
-    if result.user_id != user_id and current_user_role != "admin":
-        abort(403, description="You are not authorized to stop this quiz.")
 
     # Ensure the quiz_id from the request matches the quiz_id from the result
     if result.quiz_id != quiz_id:
