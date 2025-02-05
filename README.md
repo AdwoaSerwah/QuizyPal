@@ -4,7 +4,7 @@
 
 QuizyPal is an interactive quiz application designed to provide an engaging platform for users to test and improve their knowledge. It allows users to take quizzes on various topics, receive feedback based on their performance, and track their progress. This project focuses on the **backend** of the QuizyPal app, providing APIs for essential features such as quiz management, user authentication, and result tracking, with an emphasis on promoting a seamless interaction for both quiz takers and administrators.
 
-### ACTUAL PRESENTATION AND DEMO VIDEO LINK: [**here**](https://drive.google.com/file/d/1dhgt9wKVBHR2YfcEM6GWkHNzILnitgg8/view?usp=sharing)
+### ACTUAL PRESENTATION AND DEMO VIDEO LINK: [**here**](https://drive.google.com/file/d/1I2cBbhXnMZAbr3kLuEUYSrzWbMMkFmvk/view?usp=sharing)
 
 ### PRESENTATION SLIDES LINK: [**here**](https://docs.google.com/presentation/d/1RfYoCvJAB9n9Qrr7CL_uwruBxHJwFKyGB4OTqlhvY1g/edit?usp=sharing)
 
